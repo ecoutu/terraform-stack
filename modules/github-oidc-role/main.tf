@@ -29,9 +29,9 @@ resource "aws_iam_openid_connect_provider" "github" {
 
 # IAM role for GitHub Actions
 resource "aws_iam_role" "github_actions" {
-  name               = var.role_name
-  description        = "IAM role for GitHub Actions OIDC authentication from ${var.github_org}/${var.github_repo}"
-  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
+  name                 = var.role_name
+  description          = "IAM role for GitHub Actions OIDC authentication from ${var.github_org}/${var.github_repo}"
+  assume_role_policy   = data.aws_iam_policy_document.github_actions_assume_role.json
   max_session_duration = 3600
 
   tags = merge(
@@ -46,7 +46,7 @@ resource "aws_iam_role" "github_actions" {
 # Trust policy for GitHub Actions
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
-    effect = "Allow"
+    effect  = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
     principals {
