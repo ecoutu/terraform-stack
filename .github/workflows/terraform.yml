@@ -219,6 +219,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
+          set -euo pipefail
           terraform plan -no-color -out=tfplan
           terraform show -no-color tfplan > plan-output.txt
         env:
