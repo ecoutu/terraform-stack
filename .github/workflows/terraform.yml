@@ -210,9 +210,6 @@ jobs:
       - name: Build Migration Tool
         run: make build
 
-      - name: Run Migrations
-        run: ./migrate.sh up
-
       - name: Terraform Init
         run: terraform init
 
