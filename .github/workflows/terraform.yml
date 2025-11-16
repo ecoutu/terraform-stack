@@ -252,7 +252,7 @@ jobs:
           path: |
             tfplan
             plan-output.txt
-          retention-days: 1
+          retention-days: 7
 
   apply:
     name: Terraform Apply
