@@ -88,3 +88,22 @@ variable "github_variables" {
   type        = map(string)
   default     = {}
 }
+
+variable "minikube_instance_type" {
+  description = "Instance type to use for the minikube EC2 instance"
+  type        = string
+  default     = "t3.small"
+}
+
+variable "allowed_ssh_cidr_blocks" {
+  description = "List of CIDR blocks allowed to SSH to development instances (override to restrict access). Defaults to 0.0.0.0/0 to preserve existing behavior but should be tightened in production."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+variable "allowed_k8s_api_cidr_blocks" {
+  description = "List of CIDR blocks allowed to access Kubernetes API Server (override to restrict access). Defaults to 0.0.0.0/0 to preserve existing behavior but should be tightened in production."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+

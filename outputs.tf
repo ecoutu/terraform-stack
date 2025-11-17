@@ -141,3 +141,34 @@ output "backend_config" {
   value       = var.enable_remote_state ? module.terraform_backend[0].backend_config : null
   sensitive   = false
 }
+
+# Minikube Instance Outputs
+output "minikube_instance_id" {
+  description = "ID of the minikube EC2 instance"
+  value       = module.minikube.instance_id
+}
+
+output "minikube_public_ip" {
+  description = "Public IP address of the minikube instance"
+  value       = module.minikube.public_ip
+}
+
+output "minikube_private_ip" {
+  description = "Private IP address of the minikube instance"
+  value       = module.minikube.private_ip
+}
+
+output "minikube_public_dns" {
+  description = "Public DNS name of the minikube instance"
+  value       = module.minikube.public_dns
+}
+
+output "minikube_security_group_id" {
+  description = "Security group ID attached to the minikube instance"
+  value       = module.minikube.security_group_id
+}
+
+output "minikube_ssh_command" {
+  description = "SSH command to connect to the minikube instance"
+  value       = "ssh -i ~/.ssh/id_rsa ecoutu@${module.minikube.public_ip}"
+}

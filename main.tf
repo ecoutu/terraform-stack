@@ -75,6 +75,54 @@ module "vpc" {
   }
 }
 
+# SSH Key Pair for EC2 Instances
+module "ssh_key" {
+  source = "./modules/ssh-key-pair"
+
+  key_name   = "${var.environment}-ecoutu-key"
+  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDKv8m3jUvYaWiAJOCMLudYmZ6ig3ZVY/SfWo7PyAUdNZgZ9wO9NGAyjph66BRg1mlsXFfJF+9u1+P2hS2wZeZjzwSKIupdU8IkBwg+37nFe/lZwb6HJyRiz1Ll7diPIXOZ684t7o+sa6Sl4hqVt2xK7EdAGjMOn2cj1v5OKAaHj8zVHCQSLMbmFOONbYD+cyNz49pVVKnCYcdNjWJ2DtquKLDetUt1h69prd4h+xi4uXlaL/mV4nzjeONR6LkYzBFa/Bf454meGNJUavZNDPZ5jtxpkLy8eUzDo9i862P7oZRjEnHxOggG3NbbOVJpBZS4qFWAah+Djgw4MD7Lblzp1ltyb0xGOojHOo1pA9aLwjXcXmYNIy3Bmpa/qWARTJmUTbLTb/7HW1Kpd75Uc7TmUj9dwk54WgNXc9oEnR7RaJLr9jmtvss0FMB5ZyQfg+PyBwy1D3RzFBM4v40hZW0WBves23oXZLAn3BxifMpn14z/wLHGY4NHDYWGAbFGKXEBkAlobV//6JD6gecCQisrLajIKQNepkPk+jAc6zHBOiQZx3j2/jrm1IEnEO4RN48Px7Xa3dLDZn+m/3fEWoQKCkdwD4ymzXNBdsPCI26DSH/5cs7SEeQjTbtAz03KdsYsTfNKAZiH34kkvpNM03MaZLb2mWD9lukr3VJtmHk5vQ=="
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    Purpose     = "SSH access to development instances"
+  }
+}
+
+# Minikube EC2 instance
+module "minikube" {
+  source        = "./modules/ec2-instance"
+  subnet_ids    = module.vpc.public_subnet_ids
+  instance_type = var.minikube_instance_type
+  name_prefix   = "${var.environment}-minikube"
+  vpc_id        = module.vpc.vpc_id
+  key_name      = module.ssh_key.key_name
+
+  # Minikube-specific security group rules
+  security_group_ingress_rules = [
+    {
+      description = "SSH"
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = var.allowed_ssh_cidr_blocks
+    },
+    {
+      description = "Kubernetes API Server"
+      from_port   = 8443
+      to_port     = 8443
+      protocol    = "tcp"
+      cidr_blocks = var.allowed_k8s_api_cidr_blocks
+    }
+  ]
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    Purpose     = "Minikube Development"
+  }
+}
+
 # IAM Module
 module "iam" {
   source = "./modules/iam"
