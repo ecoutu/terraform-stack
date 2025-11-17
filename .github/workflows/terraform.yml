@@ -184,7 +184,7 @@ jobs:
     needs: [validate, migration-check]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     outputs:
-      has_changes: ${{ steps.plan.outputs.has_changes }}
+      has_changes: ${{ steps.check_plan.outputs.has_changes }}
     permissions:
       id-token: write
       contents: read
@@ -215,29 +215,10 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Plan
+      - name: Terraform Plan and Capture Exit Code
         id: plan
-        run: |
-          set -euo pipefail
-          terraform plan -no-color -out=tfplan -detailed-exitcode > plan-output.txt 2>&1 || export TF_PLAN_EXIT=$?
-
-          # Terraform plan exits with:
-          # 0 - No changes
-          # 1 - Error
-          # 2 - Changes present
-
-          if [ "${TF_PLAN_EXIT:-0}" -eq 0 ]; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "No changes detected"
-          elif [ "${TF_PLAN_EXIT:-0}" -eq 2 ]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "Changes detected"
-          else
-            echo "Terraform plan failed"
-            exit 1
-          fi
-
-          terraform show -no-color tfplan >> plan-output.txt
+        run: terraform plan -detailed-exitcode -out=tfplan -no-color
+        continue-on-error: true # Allow the step to continue even if it exits with 1 or 2
         env:
           TF_VAR_aws_region: ${{ vars.TF_VAR_aws_region }}
           TF_VAR_environment: ${{ vars.TF_VAR_environment }}
@@ -252,14 +233,45 @@ jobs:
           TF_VAR_terraform_state_bucket: ${{ vars.TF_VAR_terraform_state_bucket }}
           TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
 
+      - name: Check Plan Results
+        id: check_plan
+        if: steps.plan.outcome == 'success'
+        run: |
+          # Terraform plan exits with:
+          # 0 - No changes
+          # 1 - Error
+          # 2 - Changes present
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected"
+          elif [ $EXIT_CODE -eq 2 ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected"
+          fi
+
+          terraform show -no-color tfplan > plan-output.txt
+        env:
+          # This environment variable is set by hashicorp/setup-terraform when terraform_wrapper is true
+          # and contains the exit code of the wrapped terraform command.
+          EXIT_CODE: ${{ steps.plan.outputs.exitcode }}
+
+      - name: Handle Terraform Plan Errors
+        if: steps.plan.outcome == 'failure'
+        run: |
+          echo "::error::Terraform plan failed (exit code 1)."
+          exit 1 # Fail the job if a critical error occurred during planning
+
       - name: Display Plan Summary
         run: |
           echo "### 📋 Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**has_changes output:** \`${{ steps.plan.outputs.has_changes }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.plan.outputs.has_changes }}" == "false" ]; then
             echo "✅ **No changes detected** - Apply job will be skipped" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ **Changes detected** - Review the plan below before approving the apply job" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Changes detected** - Apply job will run after approval" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`terraform" >> $GITHUB_STEP_SUMMARY
@@ -267,7 +279,7 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Plan Artifact
-        if: steps.plan.outputs.has_changes == 'true'
+        if: steps.check_plan.outputs.has_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
