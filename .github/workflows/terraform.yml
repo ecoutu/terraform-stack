@@ -272,9 +272,9 @@ jobs:
         run: |
           echo "### 📋 Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**has_changes output:** \`${{ steps.plan.outputs.has_changes }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**has_changes output:** \`${{ steps.check_plan.outputs.has_changes }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.plan.outputs.has_changes }}" == "false" ]; then
+          if [ "${{ steps.check_plan.outputs.has_changes }}" == "false" ]; then
             echo "✅ **No changes detected** - Apply job will be skipped" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ **Changes detected** - Apply job will run after approval" >> $GITHUB_STEP_SUMMARY
