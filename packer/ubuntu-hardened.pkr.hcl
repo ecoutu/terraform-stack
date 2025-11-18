@@ -143,7 +143,10 @@ build {
       "sudo ufw default deny incoming",
       "sudo ufw default allow outgoing",
       "sudo ufw allow 22/tcp comment 'SSH'",
-      "sudo ufw --force enable",
+      "sudo ufw allow 22/tcp comment 'SSH'",
+      "sudo ufw allow 8443/tcp comment 'Kubernetes API server (minikube default)'",
+      "sudo ufw allow 6443/tcp comment 'Kubernetes API server (alternative)'",
+      "sudo ufw allow 30000:32767/tcp comment 'Kubernetes NodePort services'",
       "sudo ufw status"
     ]
   }
