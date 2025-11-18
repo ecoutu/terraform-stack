@@ -345,13 +345,8 @@ build {
   provisioner "shell" {
     inline = [
       "echo 'Installing Helm...'",
-      "HELM_VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | grep tag_name | cut -d '\"' -f 4)",
-      "curl -LO https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz",
-      "curl -LO https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum",
-      "sha256sum -c helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum",
-      "tar -zxvf helm-${HELM_VERSION}-linux-amd64.tar.gz",
-      "sudo mv linux-amd64/helm /usr/local/bin/helm",
-      "rm -rf linux-amd64 helm-${HELM_VERSION}-linux-amd64.tar.gz helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum",
+      "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash",
+      "helm version"
     ]
   }
 
