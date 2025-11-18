@@ -1,22 +1,22 @@
-# Terraform Project
+# Terraform Infrastructure Stack
 
-This project creates a complete AWS infrastructure with VPC, subnets, and networking components using a modular architecture.
+AWS infrastructure with VPC, IAM, and CI/CD using modular Terraform and GitHub Actions.
 
 ## Prerequisites
 
-- Terraform >= 1.0
-- AWS CLI configured with appropriate credentials
-- AWS account with necessary permissions
-- **Optional**: Docker & Docker Compose (for containerized development)
+- Terraform >= 1.13.5
+- AWS CLI configured
+- GitHub repository with Actions enabled
+- **Optional**: Docker for containerized development
 
 ## Features
 
-- Modular architecture for reusability and maintainability
-- VPC with public and private subnets across multiple availability zones
-- Internet Gateway for public subnet connectivity
-- NAT Gateways for private subnet internet access
-- Configurable number of availability zones
-- Comprehensive tagging strategy
+- Modular architecture with reusable components
+- VPC with public/private subnets across AZs
+- IAM users, roles, and GitHub OIDC authentication
+- State management with S3 backend
+- Go-based state migration system
+- GitHub Actions CI/CD with plan/apply workflow
 
 ## Usage
 
@@ -71,123 +71,29 @@ make docker-migrate CMD="status"
 
 See [DOCKER.md](DOCKER.md) for complete Docker documentation.
 
-## Project Structure
+## Key Variables
 
-```
-.
-├── main.tf                      # Root module - orchestrates infrastructure
-├── variables.tf                 # Root module input variables
-├── outputs.tf                   # Root module outputs
-├── terraform.tfvars.example     # Example variable values
-├── migrate.sh                   # Migration tool wrapper script
-├── migrations/                  # State migration system
-│   ├── main.go                  # Migration tool source
-│   ├── go.mod                   # Go module definition
-│   ├── migrate                  # Compiled migration binary
-│   ├── .migration_state.json    # Migration tracking (git-ignored)
-│   ├── README.md                # Migration system documentation
-│   └── files/                   # Migration files
-│       └── 0001_*.go            # Individual migrations
-├── modules/
-│   ├── iam/                     # IAM module (users, roles, policies)
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   ├── outputs.tf
-│   │   └── README.md
-│   ├── iam-role/                # Reusable IAM role module
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   ├── outputs.tf
-│   │   └── README.md
-│   ├── iam-user/                # Reusable IAM user module
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   ├── outputs.tf
-│   │   └── README.md
-│   └── vpc/                     # VPC module
-│       ├── main.tf
-│       ├── variables.tf
-│       ├── outputs.tf
-│       └── README.md
-└── README.md                    # This file
-```
+| Name | Description | Default |
+|------|-------------|----------|
+| aws_region | AWS region | us-east-1 |
+| environment | Environment name | dev |
+| vpc_cidr | VPC CIDR block | 10.0.0.0/16 |
+| az_count | Number of AZs | 2 |
+| github_org | GitHub organization | ecoutu |
+| github_repo | GitHub repository | terraform-stack |
+| terraform_state_bucket | S3 bucket for state | "" |
 
-## Modules
-
-### IAM Module
-
-Orchestrates IAM resources including:
-- IAM user with console and programmatic access
-- Administrator role with full AWS access
-- Assume role permissions
-- Console self-service capabilities (password, MFA, access keys)
-- Instance profile for EC2
-
-See [modules/iam/README.md](modules/iam/README.md) for detailed module documentation.
-
-### VPC Module
-
-Creates a complete VPC infrastructure with:
-- VPC with configurable CIDR
-- Public and private subnets
-- Internet Gateway
-- NAT Gateways (optional)
-- Route tables and associations
-
-See [modules/vpc/README.md](modules/vpc/README.md) for detailed module documentation.
-
-### IAM Role Module
-
-Reusable module for creating IAM roles with:
-- Flexible trust policies
-- Managed and custom policy attachments
-- Instance profile support
-
-See [modules/iam-role/README.md](modules/iam-role/README.md) for detailed module documentation.
-
-### IAM User Module
-
-Reusable module for creating IAM users with:
-- Console and programmatic access
-- Policy attachments
-- Group memberships
-- SSH key support
-
-See [modules/iam-user/README.md](modules/iam-user/README.md) for detailed module documentation.
-
-## Inputs
-
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|----------|
-| aws_region | AWS region for resources | string | us-east-1 | no |
-| environment | Environment name | string | dev | no |
-| project_name | Project name for tagging | string | my-project | no |
-| vpc_cidr | CIDR block for VPC | string | 10.0.0.0/16 | no |
-| az_count | Number of availability zones | number | 2 | no |
-| enable_nat_gateway | Enable NAT Gateways | bool | true | no |
+See [variables.tf](variables.tf) for complete list.
 
 ## Outputs
 
-### VPC Outputs
-| Name | Description |
-|------|-------------|
-| vpc_id | ID of the VPC |
-| public_subnet_ids | List of public subnet IDs |
-| private_subnet_ids | List of private subnet IDs |
-| nat_gateway_ids | List of NAT Gateway IDs |
-| internet_gateway_id | Internet Gateway ID |
+Key outputs include:
+- VPC ID, subnet IDs, and NAT Gateway IPs
+- IAM user ARN, access keys, and admin role
+- GitHub Actions role ARN and OIDC provider
+- Terraform state bucket and lock table
 
-### IAM Outputs
-| Name | Description |
-|------|-------------|
-| user_ecoutu_arn | ARN of the IAM user |
-| user_ecoutu_name | Name of the IAM user |
-| user_ecoutu_access_key_id | Access key ID (sensitive) |
-| user_ecoutu_access_key_secret | Access key secret (sensitive) |
-| admin_role_arn | ARN of the admin role |
-| admin_role_name | Name of the admin role |
-| admin_role_instance_profile_arn | Instance profile ARN |
-| admin_role_instance_profile_name | Instance profile name |
+See [outputs.tf](outputs.tf) for complete list.
 
 ## State Migrations
 
@@ -242,11 +148,22 @@ Use migrations when you need to:
 - [migrations/MIGRATION-SYSTEM.md](migrations/MIGRATION-SYSTEM.md) - Migration system overview and comparison
 - [STATE-MIGRATION.md](STATE-MIGRATION.md) - Migration guide
 
+## CI/CD Pipeline
+
+GitHub Actions workflow with:
+- Validation and format checking
+- Terraform plan on pull requests
+- Manual approval for production apply
+- OIDC authentication (no stored credentials)
+
+See [.github/workflows/terraform.yml](.github/workflows/terraform.yml) and [OIDC-SETUP.md](OIDC-SETUP.md).
+
 ## Documentation
 
-- **[QUICK-REFERENCE.md](QUICK-REFERENCE.md)** - Quick reference for common commands and workflows
-- **[DOCKER.md](DOCKER.md)** - Complete Docker usage guide
-- **[PASSWORD-SETUP.md](PASSWORD-SETUP.md)** - IAM user password management
-- **[STATE-MIGRATION.md](STATE-MIGRATION.md)** - State migration guide
-- **[migrations/README.md](migrations/README.md)** - Migration system documentation
-- **[migrations/MIGRATION-SYSTEM.md](migrations/MIGRATION-SYSTEM.md)** - Migration system overview
+- [QUICK-REFERENCE.md](QUICK-REFERENCE.md) - Common commands
+- [DOCKER.md](DOCKER.md) - Docker usage
+- [PASSWORD-SETUP.md](PASSWORD-SETUP.md) - IAM password setup
+- [OIDC-SETUP.md](OIDC-SETUP.md) - GitHub OIDC setup
+- [GITHUB-SECRETS-SETUP.md](GITHUB-SECRETS-SETUP.md) - Secrets configuration
+- [STATE-MIGRATION.md](STATE-MIGRATION.md) - State migrations
+- [migrations/README.md](migrations/README.md) - Migration system
