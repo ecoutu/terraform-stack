@@ -1,0 +1,27 @@
+# Packer cache
+packer_cache/
+
+# Packer crash logs
+crash.log
+
+# Packer manifest
+packer-manifest.json
+
+# Variable files that might contain secrets
+*.pkrvars.hcl
+*.auto.pkrvars.hcl
+!example.pkrvars.hcl
+
+# Build artifacts
+*.box
+*.ova
+*.ovf
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

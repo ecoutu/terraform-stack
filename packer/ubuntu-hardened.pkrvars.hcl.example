@@ -1,0 +1,21 @@
+# Packer Variables Example File
+# Copy this file to ubuntu-hardened.pkrvars.hcl and customize the values
+
+# AWS Region where the AMI will be built
+# Default: "us-east-1"
+aws_region = "us-east-1"
+
+# EC2 instance type to use for the AMI build
+# Default: "t3.small"
+# Recommended: t3.small or larger for faster builds
+instance_type = "t3.small"
+
+# Prefix for the AMI name
+# The final AMI name will be: {ami_name_prefix}-{timestamp}
+# Default: "ubuntu-hardened-ecoutu"
+ami_name_prefix = "ubuntu-hardened-ecoutu"
+
+# SSH public key to add to the ecoutu user
+# This should match the key used in your Terraform configuration
+# Format: "ssh-rsa AAAAB3Nza... user@host"
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC... your-email@example.com"
