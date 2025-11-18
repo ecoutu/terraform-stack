@@ -107,3 +107,9 @@ variable "allowed_k8s_api_cidr_blocks" {
   default     = ["0.0.0.0/0"]
 }
 
+variable "domain_name" {
+  description = "Domain name for Route53 hosted zones"
+  type        = string
+  default     = "linklayer.ca"
+}
+

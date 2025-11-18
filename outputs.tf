@@ -172,3 +172,44 @@ output "minikube_ssh_command" {
   description = "SSH command to connect to the minikube instance"
   value       = "ssh -i ~/.ssh/id_rsa ecoutu@${module.minikube.public_ip}"
 }
+
+# Route53 Outputs
+output "route53_public_zone_id" {
+  description = "The hosted zone ID of the public Route53 zone"
+  value       = module.route53.public_zone_id
+}
+
+output "route53_public_name_servers" {
+  description = "The name servers for the public hosted zone (configure these with your domain registrar)"
+  value       = module.route53.public_name_servers
+}
+
+output "route53_private_zone_id" {
+  description = "The hosted zone ID of the private Route53 zone"
+  value       = module.route53.private_zone_id
+}
+
+output "route53_domain_name" {
+  description = "The domain name of the Route53 hosted zones"
+  value       = module.route53.domain_name
+}
+
+output "route53_public_record_fqdns" {
+  description = "Map of public DNS record FQDNs"
+  value       = module.route53.public_record_fqdns
+}
+
+output "route53_private_record_fqdns" {
+  description = "Map of private DNS record FQDNs"
+  value       = module.route53.private_record_fqdns
+}
+
+output "minikube_public_fqdn" {
+  description = "The public fully qualified domain name for the minikube instance"
+  value       = module.route53.public_record_fqdns["minikube_public"]
+}
+
+output "minikube_private_fqdn" {
+  description = "The private fully qualified domain name for the minikube instance"
+  value       = module.route53.private_record_fqdns["minikube_private"]
+}

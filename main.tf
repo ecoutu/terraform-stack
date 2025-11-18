@@ -259,3 +259,35 @@ module "github_secrets" {
     }
   )
 }
+
+# Route53 Hosted Zones for linklayer.ca
+module "route53" {
+  source = "./modules/route53"
+
+  domain_name         = var.domain_name
+  create_public_zone  = true
+  create_private_zone = true
+  vpc_id              = module.vpc.vpc_id
+
+  dns_records = {
+    minikube_public = {
+      name    = "minikube.${var.domain_name}"
+      type    = "A"
+      ttl     = 300
+      records = [module.minikube.public_ip]
+      zone    = "public"
+    }
+    minikube_private = {
+      name    = "minikube.${var.domain_name}"
+      type    = "A"
+      ttl     = 300
+      records = [module.minikube.private_ip]
+      zone    = "private"
+    }
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
