@@ -275,7 +275,7 @@ ssh ecoutu@<instance-ip> 'id ubuntu 2>&1'
 ## Maintenance
 
 ### Update Base AMI
-The template automatically uses the latest Ubuntu 22.04 AMI from Canonical. Rebuild regularly to get latest security patches.
+The template automatically uses the latest Ubuntu 24.04 AMI from Canonical. Rebuild regularly to get latest security patches.
 
 ### Update SSH Key
 Edit the `ssh_public_key` variable or pass via `-var` flag:
