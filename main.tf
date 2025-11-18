@@ -80,12 +80,38 @@ module "ssh_key" {
   source = "./modules/ssh-key-pair"
 
   key_name   = "${var.environment}-ecoutu-key"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDKv8m3jUvYaWiAJOCMLudYmZ6ig3ZVY/SfWo7PyAUdNZgZ9wO9NGAyjph66BRg1mlsXFfJF+9u1+P2hS2wZeZjzwSKIupdU8IkBwg+37nFe/lZwb6HJyRiz1Ll7diPIXOZ684t7o+sa6Sl4hqVt2xK7EdAGjMOn2cj1v5OKAaHj8zVHCQSLMbmFOONbYD+cyNz49pVVKnCYcdNjWJ2DtquKLDetUt1h69prd4h+xi4uXlaL/mV4nzjeONR6LkYzBFa/Bf454meGNJUavZNDPZ5jtxpkLy8eUzDo9i862P7oZRjEnHxOggG3NbbOVJpBZS4qFWAah+Djgw4MD7Lblzp1ltyb0xGOojHOo1pA9aLwjXcXmYNIy3Bmpa/qWARTJmUTbLTb/7HW1Kpd75Uc7TmUj9dwk54WgNXc9oEnR7RaJLr9jmtvss0FMB5ZyQfg+PyBwy1D3RzFBM4v40hZW0WBves23oXZLAn3BxifMpn14z/wLHGY4NHDYWGAbFGKXEBkAlobV//6JD6gecCQisrLajIKQNepkPk+jAc6zHBOiQZx3j2/jrm1IEnEO4RN48Px7Xa3dLDZn+m/3fEWoQKCkdwD4ymzXNBdsPCI26DSH/5cs7SEeQjTbtAz03KdsYsTfNKAZiH34kkvpNM03MaZLb2mWD9lukr3VJtmHk5vQ=="
+  public_key = var.ssh_public_key
 
   tags = {
     Environment = var.environment
     Project     = var.project_name
     Purpose     = "SSH access to development instances"
+  }
+}
+
+# Packer-built Hardened Ubuntu AMI
+data "aws_ami" "packer_hardened_ubuntu" {
+  most_recent = true
+  owners      = ["self"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu-hardened-ecoutu-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "tag:Created_By"
+    values = ["Packer"]
   }
 }
 
@@ -97,6 +123,7 @@ module "minikube" {
   name_prefix   = "${var.environment}-minikube"
   vpc_id        = module.vpc.vpc_id
   key_name      = module.ssh_key.key_name
+  ami_id        = data.aws_ami.packer_hardened_ubuntu.id
 
   # Minikube-specific security group rules
   security_group_ingress_rules = [
@@ -238,7 +265,8 @@ module "github_secrets" {
     var.github_secrets,
     {
       # Sensitive values as secrets
-      "TF_VAR_github_token" = var.github_token
+      "TF_VAR_github_token"    = var.github_token
+      "PKR_VAR_ssh_public_key" = var.ssh_public_key
     }
   )
 
@@ -257,6 +285,10 @@ module "github_secrets" {
       "TF_VAR_github_branches"        = jsonencode(var.github_branches)
       "TF_VAR_enable_remote_state"    = tostring(var.enable_remote_state)
       "TF_VAR_terraform_state_bucket" = var.terraform_state_bucket
+      # Packer variables
+      "PKR_VAR_aws_region"      = var.aws_region
+      "PKR_VAR_instance_type"   = "t3.small"
+      "PKR_VAR_ami_name_prefix" = "ubuntu-hardened-ecoutu"
     }
   )
 }

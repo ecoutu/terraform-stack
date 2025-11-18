@@ -113,3 +113,9 @@ variable "domain_name" {
   default     = "linklayer.ca"
 }
 
+variable "ssh_public_key" {
+  description = "SSH public key for EC2 instances and Packer-built AMIs"
+  type        = string
+  sensitive   = true
+}
+
