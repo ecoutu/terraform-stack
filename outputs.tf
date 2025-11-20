@@ -143,6 +143,16 @@ output "backend_config" {
 }
 
 # Minikube Instance Outputs
+output "minikube_ami_id" {
+  description = "AMI ID used for the minikube instance"
+  value       = data.aws_ami.packer_hardened_ubuntu.id
+}
+
+output "minikube_ami_name" {
+  description = "AMI name used for the minikube instance"
+  value       = data.aws_ami.packer_hardened_ubuntu.name
+}
+
 output "minikube_instance_id" {
   description = "ID of the minikube EC2 instance"
   value       = module.minikube.instance_id

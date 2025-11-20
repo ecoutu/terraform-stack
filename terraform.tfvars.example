@@ -37,6 +37,10 @@ allowed_k8s_api_cidr_blocks = ["0.0.0.0/0"]
 # Route53 Configuration
 domain_name = "linklayer.ca"
 
+# SSH Configuration
+# SSH public key for EC2 instances and Packer-built AMIs
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAA... your-public-key-here"
+
 # Additional GitHub Secrets (optional)
 # github_secrets = {
 #   "CUSTOM_SECRET" = "secret-value"

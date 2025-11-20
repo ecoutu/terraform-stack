@@ -9,15 +9,20 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.ref }} # This creates a concurrency group based on the branch name
+  cancel-in-progress: true # This cancels any in-progress runs in the same group
+
 # Required permissions for OIDC authentication
 permissions:
-  id-token: write   # Required to request OIDC token
-  contents: read    # Required to checkout repository
-  pull-requests: write  # Required to comment on PRs
+  id-token: write # Required to request OIDC token
+  contents: read # Required to checkout repository
+  pull-requests: write # Required to comment on PRs
 
 env:
   AWS_REGION: us-east-1
   TF_VERSION: 1.13.5
+  PKG_VERSION: 1.14.3
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/terraform-stack
 
@@ -64,8 +69,78 @@ jobs:
       - name: Check Migration Status
         run: ./migrate.sh status
 
+  packer-build:
+    name: Build Packer AMI
+    runs-on: ubuntu-latest
+    needs: [validate, migration-check]
+    if: (github.event_name == 'push') || (github.event_name == 'pull_request')
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get changed files in the packer folder
+        id: check-packer-changes
+        uses: tj-actions/changed-files@v47 # v47
+        with:
+          files: packer/**
+          # files_ignore: docs/static.js
+
+      - name: Exit early if no packer files have changed
+        if: steps.check-packer-changes.outputs.any_changed == 'false'
+        run: |
+          echo "No packer files have changed, exiting."
+          exit 0
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Packer-${{ github.run_id }}
+
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: ${{ env.PKG_VERSION }}
+
+      - name: Initialize Packer
+        run: |
+          cd packer
+          packer init ubuntu-hardened.pkr.hcl
+
+      - name: Validate Packer Template
+        run: |
+          cd packer
+          packer validate ubuntu-hardened.pkr.hcl
+        env:
+          PKR_VAR_aws_region: ${{ vars.PKR_VAR_aws_region }}
+          PKR_VAR_instance_type: ${{ vars.PKR_VAR_instance_type }}
+          PKR_VAR_ami_name_prefix: ${{ vars.PKR_VAR_ami_name_prefix }}
+          PKR_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+
+      - name: Build AMI with Packer
+        run: |
+          cd packer
+          packer build ubuntu-hardened.pkr.hcl
+        env:
+          PKR_VAR_aws_region: ${{ vars.PKR_VAR_aws_region }}
+          PKR_VAR_instance_type: ${{ vars.PKR_VAR_instance_type }}
+          PKR_VAR_ami_name_prefix: ${{ vars.PKR_VAR_ami_name_prefix }}
+          PKR_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+
+      - name: Upload Packer Manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: packer-manifest
+          path: packer/packer-manifest.json
+          retention-days: 30
+
   build-and-push:
     name: Docker Build and Push
+    needs: [validate, migration-check]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -124,15 +199,12 @@ jobs:
   plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
-    needs: [validate, migration-check]
-    if: github.event_name == 'pull_request'
+    needs: [validate, migration-check, packer-build]
+    if: github.event_name == 'pull_request' && (needs.packer-build.result == 'skipped' || needs.packer-build.result == 'success')
     permissions:
       id-token: write
       contents: read
       pull-requests: write
-    concurrency:
-      group: ${{ github.ref }} # This creates a concurrency group based on the branch name
-      cancel-in-progress: true # This cancels any in-progress runs in the same group
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -180,6 +252,7 @@ jobs:
           TF_VAR_enable_remote_state: ${{ vars.TF_VAR_enable_remote_state }}
           TF_VAR_terraform_state_bucket: ${{ vars.TF_VAR_terraform_state_bucket }}
           TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
       - name: Update Pull Request
         uses: actions/github-script@v7
@@ -208,23 +281,22 @@ jobs:
               body: output
             })
 
-      - name: Terraform Plan Status
+      - name: Terraform Plan Rollback on Failure
         if: steps.plan.outcome == 'failure'
-        run: exit 1
+        run: |
+          ./migrate.sh down
+          exit 1
 
   plan-production:
     name: Terraform Plan (Production)
     runs-on: ubuntu-latest
-    needs: [validate, migration-check]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [validate, migration-check, packer-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && (needs.packer-build.result == 'skipped' || needs.packer-build.result == 'success')
     outputs:
       has_changes: ${{ steps.check_plan.outputs.has_changes }}
     permissions:
       id-token: write
       contents: read
-    concurrency:
-      group: ${{ github.ref }} # This creates a concurrency group based on the branch name
-      cancel-in-progress: true # This cancels any in-progress runs in the same group
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -269,6 +341,7 @@ jobs:
           TF_VAR_enable_remote_state: ${{ vars.TF_VAR_enable_remote_state }}
           TF_VAR_terraform_state_bucket: ${{ vars.TF_VAR_terraform_state_bucket }}
           TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
       - name: Check Plan Results
         id: check_plan
@@ -297,6 +370,7 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: |
           echo "::error::Terraform plan failed (exit code 1)."
+          ./migrate.sh down
           exit 1 # Fail the job if a critical error occurred during planning
 
       - name: Display Plan Summary
@@ -340,9 +414,6 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    concurrency:
-      group: ${{ github.ref }} # This creates a concurrency group based on the branch name
-      cancel-in-progress: true # This cancels any in-progress runs in the same group
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -395,6 +466,7 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Terraform Apply
+        id: apply
         run: terraform apply tfplan
         env:
           TF_VAR_aws_region: ${{ vars.TF_VAR_aws_region }}
@@ -409,6 +481,11 @@ jobs:
           TF_VAR_enable_remote_state: ${{ vars.TF_VAR_enable_remote_state }}
           TF_VAR_terraform_state_bucket: ${{ vars.TF_VAR_terraform_state_bucket }}
           TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+
+      - name: Rollback Migrations on Failure
+        if: steps.apply.outcome == 'failure'
+        run: ./migrate.sh down
 
       - name: Comment on Commit
         uses: actions/github-script@v7
