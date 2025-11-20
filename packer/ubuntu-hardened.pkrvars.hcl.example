@@ -18,4 +18,4 @@ ami_name_prefix = "ubuntu-hardened-ecoutu"
 # SSH public key to add to the ecoutu user
 # This should match the key used in your Terraform configuration
 # Format: "ssh-rsa AAAAB3Nza... user@host"
-ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC... your-email@example.com"
+ssh_public_key = "your-public-key-here user@example.com"

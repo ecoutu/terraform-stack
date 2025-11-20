@@ -113,3 +113,13 @@ variable "domain_name" {
   default     = "linklayer.ca"
 }
 
+variable "ssh_public_key" {
+  description = "SSH public key for EC2 instances and Packer-built AMIs"
+  type        = string
+
+  validation {
+    condition     = can(regex("^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) [A-Za-z0-9+/]+[=]{0,3}( .+)?$", var.ssh_public_key))
+    error_message = "The ssh_public_key must be a valid SSH public key (ssh-rsa, ssh-ed25519, or ecdsa format)."
+  }
+}
+

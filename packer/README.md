@@ -4,7 +4,7 @@ This directory contains Packer templates for building hardened Ubuntu AMIs.
 
 ## Overview
 
-The `ubuntu-hardened.pkr.hcl` template creates a security-hardened Ubuntu 22.04 AMI with:
+The `ubuntu-hardened.pkr.hcl` template creates a security-hardened Ubuntu 24.04 AMI with:
 
 - **Custom User**: Creates `ecoutu` user with sudo access
 - **SSH Hardening**: Disables password auth, root login, configures secure defaults
@@ -22,8 +22,8 @@ The `ubuntu-hardened.pkr.hcl` template creates a security-hardened Ubuntu 22.04 
    brew install packer
 
    # Linux
-   wget https://releases.hashicorp.com/packer/1.10.0/packer_1.10.0_linux_amd64.zip
-   unzip packer_1.10.0_linux_amd64.zip
+   wget https://releases.hashicorp.com/packer/1.14.3/packer_1.14.3_linux_amd64.zip
+   unzip packer_1.14.3_linux_amd64.zip
    sudo mv packer /usr/local/bin/
    ```
 
@@ -227,10 +227,10 @@ aws configure
 
 ### AMI Not Found
 ```bash
-# List available Ubuntu AMIs
+# List available Ubuntu 24.04 (Noble) AMIs
 aws ec2 describe-images \
   --owners 099720109477 \
-  --filters "Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*" \
+  --filters "Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*" \
   --query 'Images[*].[Name,ImageId]' \
   --output table
 ```
@@ -275,7 +275,7 @@ ssh ecoutu@<instance-ip> 'id ubuntu 2>&1'
 ## Maintenance
 
 ### Update Base AMI
-The template automatically uses the latest Ubuntu 22.04 AMI from Canonical. Rebuild regularly to get latest security patches.
+The template automatically uses the latest Ubuntu 24.04 AMI from Canonical. Rebuild regularly to get latest security patches.
 
 ### Update SSH Key
 Edit the `ssh_public_key` variable or pass via `-var` flag:

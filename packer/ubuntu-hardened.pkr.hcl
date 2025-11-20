@@ -1,4 +1,5 @@
 packer {
+  required_version = ">= 1.14.3"
   required_plugins {
     amazon = {
       version = ">= 1.2.8"
@@ -126,13 +127,11 @@ build {
       "sudo sed -i 's/PermitEmptyPasswords yes/PermitEmptyPasswords no/' /etc/ssh/sshd_config",
       "sudo sed -i 's/#ChallengeResponseAuthentication yes/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config",
       "sudo sed -i 's/ChallengeResponseAuthentication yes/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config",
-      "sudo sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config",
       "sudo sed -i 's/#MaxAuthTries 6/MaxAuthTries 3/' /etc/ssh/sshd_config",
       "sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 300/' /etc/ssh/sshd_config",
       "sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 2/' /etc/ssh/sshd_config",
       "sudo sed -i 's/#MaxSessions 10/MaxSessions 2/' /etc/ssh/sshd_config",
       "echo 'AllowUsers ecoutu' | sudo tee -a /etc/ssh/sshd_config",
-      "echo 'Protocol 2' | sudo tee -a /etc/ssh/sshd_config",
       "sudo sshd -t" # Test SSH config
     ]
   }
@@ -144,6 +143,9 @@ build {
       "sudo ufw default deny incoming",
       "sudo ufw default allow outgoing",
       "sudo ufw allow 22/tcp comment 'SSH'",
+      # "sudo ufw allow 8443/tcp comment 'Kubernetes API server (minikube default)'",
+      # "sudo ufw allow 6443/tcp comment 'Kubernetes API server (alternative)'",
+      # "sudo ufw allow 30000:32767/tcp comment 'Kubernetes NodePort services'",
       "sudo ufw --force enable",
       "sudo ufw status"
     ]
@@ -299,11 +301,12 @@ build {
   provisioner "shell" {
     inline = [
       "echo 'Installing kubectl...'",
-      "curl -LO \"https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl\"",
-      "curl -LO \"https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256\"",
-      "echo \"$(cat kubectl.sha256)  kubectl\" | sha256sum --check",
-      "sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl",
-      "rm kubectl kubectl.sha256",
+      "curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg",
+      "sudo chmod a+r /etc/apt/keyrings/kubernetes-apt-keyring.gpg",
+      "echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.34/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list > /dev/null",
+      "sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list",
+      "sudo apt-get update",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y kubectl",
       "kubectl version --client"
     ]
   }
@@ -328,7 +331,7 @@ build {
       "RemainAfterExit=yes",
       "User=ecoutu",
       "Group=ecoutu",
-      "ExecStart=/usr/local/bin/minikube start --driver=docker --listen-address=0.0.0.0 --apiserver-ips=127.0.0.1",
+      "ExecStart=/usr/local/bin/minikube start --driver=docker --listen-address=127.0.0.1 --apiserver-ips=127.0.0.1",
       "ExecStop=/usr/local/bin/minikube stop",
       "StandardOutput=journal",
       "",
@@ -336,7 +339,9 @@ build {
       "WantedBy=multi-user.target",
       "EOF",
       "sudo systemctl daemon-reload",
-      "echo 'Minikube service configured (will start on first boot)'"
+      "sudo systemctl enable minikube",
+      "echo 'Minikube service configured (will start on first boot)'",
+      "minikube version"
     ]
   }
 
@@ -344,7 +349,12 @@ build {
   provisioner "shell" {
     inline = [
       "echo 'Installing Helm...'",
-      "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash",
+      "curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | sudo gpg --dearmor -o /etc/apt/keyrings/helm.gpg",
+      "sudo chmod a+r /etc/apt/keyrings/helm.gpg",
+      "sudo apt-get install -y apt-transport-https --no-install-recommends",
+      "echo 'deb [signed-by=/etc/apt/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main' | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list",
+      "sudo apt-get update",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y helm",
       "helm version"
     ]
   }
@@ -360,7 +370,10 @@ build {
       "sudo rm -f /root/.bash_history",
       "sudo rm -f /home/ubuntu/.bash_history 2>/dev/null || true",
       "sudo rm -f /home/ecoutu/.bash_history 2>/dev/null || true",
-      "sudo find /var/log -type f -exec truncate -s 0 {} \\;",
+      # Clean sensitive logs but preserve structure
+      "sudo journalctl --vacuum-time=1s",
+      "sudo rm -f /var/log/auth.log.* /var/log/syslog.*",
+      "sudo truncate -s 0 /var/log/auth.log /var/log/syslog",
       "echo 'AMI preparation complete!'"
     ]
   }
