@@ -16,12 +16,12 @@ Build the migration tool:
 
 ```bash
 cd migrations
-go build -o migrate main.go types.go
+go build -o migrate .
 ```
 
-Or use it directly:
+Or from the project root:
 ```bash
-go run main.go types.go <command>
+make build
 ```
 
 ## Usage
@@ -32,7 +32,8 @@ go run main.go types.go <command>
 ./migrate create move_vpc_to_module
 ```
 
-This creates a new migration file in `migrations/files/` with the next version number.
+This creates a new migration file in `migrations/` directory with the next version number.
+Each migration is a separate Go file that automatically registers itself.
 
 ### Apply Migrations
 
@@ -79,13 +80,15 @@ Reset all migration tracking (doesn't undo migrations):
 
 ## Migration File Structure
 
-Each migration file defines `up` and `down` operations. You can use either the type-safe helper functions (recommended) or traditional struct initialization.
+Each migration is stored in its own file (e.g., `0001_migration_name.go`) in the `migrations/` directory.
+The file contains the migration function and an `init()` function that automatically registers it.
 
-### Type-Safe Approach (Recommended)
+### Standard Structure
 
 ```go
 package main
 
+// Migration0001 - move_account_alias_to_iam_module
 func Migration0001() Migration {
 	// Create migration with helper function
 	m := NewMigration(
@@ -112,15 +115,22 @@ func Migration0001() Migration {
 
 	return m
 }
+
+// This init function automatically registers the migration
+// No manual registration needed!
+func init() {
+	registerMigration(1, Migration0001)
+}
 ```
 
 See [TYPES.md](TYPES.md) for complete type system documentation.
 
-### Traditional Struct Approach (Still Supported)
+### Alternative: Traditional Struct Approach
 
 ```go
 package main
 
+// Migration0001 - migration_name
 func Migration0001() Migration {
 	return Migration{
 		Version:     1,
@@ -147,6 +157,10 @@ func Migration0001() Migration {
 			},
 		},
 	}
+}
+
+func init() {
+	registerMigration(1, Migration0001)
 }
 ```
 
@@ -299,19 +313,24 @@ Down: []Command{
    ./migrate create add_new_module
    ```
 
-2. **Edit the migration file** in `migrations/files/`
+2. **Edit the migration file** in `migrations/` directory (e.g., `migrations/0002_add_new_module.go`)
 
-3. **Check status:**
+3. **Rebuild the tool:**
+   ```bash
+   make build
+   ```
+
+4. **Check status:**
    ```bash
    ./migrate status
    ```
 
-4. **Apply migration:**
+5. **Apply migration:**
    ```bash
    ./migrate up
    ```
 
-5. **Verify no changes:**
+6. **Verify no changes:**
    ```bash
    cd .. && terraform plan
    ```
@@ -329,11 +348,13 @@ migrations/
 ├── types.go                 # Type definitions
 ├── go.mod                   # Go module file
 ├── .migration_state.json    # Migration state tracking
-└── files/                   # Migration files
-    ├── 0001_*.go
-    ├── 0002_*.go
-    └── ...
+├── 0001_*.go                # Individual migration files
+├── 0002_*.go                # Each migration in its own file
+└── files/                   # (deprecated, kept for reference)
 ```
+
+**Note:** Each migration is now a separate `.go` file in the `migrations/` directory.
+The `files/` subdirectory is deprecated but kept for backward compatibility.
 
 ## Safety Features
 
@@ -373,7 +394,7 @@ Remove it from `.migration_state.json` applied list, or use terraform state comm
 - name: Run Migrations
   run: |
     cd migrations
-    go build -o migrate main.go types.go
+    go build -o migrate .
     ./migrate up
     cd ..
     terraform plan -detailed-exitcode

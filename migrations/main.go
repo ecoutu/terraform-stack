@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -24,6 +23,9 @@ const (
 	colorMagenta   = "\033[35m"
 	colorCyan      = "\033[36m"
 )
+
+// migrationRegistry stores all registered migrations
+var migrationRegistry = make(map[int]func() Migration)
 
 func main() {
 	if len(os.Args) < 2 {
@@ -96,8 +98,9 @@ func createMigration(name string) {
 		version = migrations[len(migrations)-1].Version + 1
 	}
 
-	// Create migration file
-	filename := fmt.Sprintf("%s/%04d_%s.go", migrationsDir, version, sanitizeName(name))
+	// Create migration file in migrations directory (not files/)
+	filename := fmt.Sprintf("%04d_%s.go", version, sanitizeName(name))
+	filepath := fmt.Sprintf("migrations/%s", filename)
 
 	template := fmt.Sprintf(`package main
 
@@ -143,18 +146,23 @@ func Migration%04d() Migration {
 
 	return m
 }
-`, version, name, version, version, name)
 
-	err := os.WriteFile(filename, []byte(template), 0644)
+func init() {
+	registerMigration(%d, Migration%04d)
+}
+`, version, name, version, version, name, version, version)
+
+	err := os.WriteFile(filepath, []byte(template), 0644)
 	if err != nil {
 		fmt.Printf("%sError creating migration file: %v%s\n", colorRed, err, colorReset)
 		os.Exit(1)
 	}
 
-	fmt.Printf("%s✓ Created migration: %s%s\n", colorGreen, filename, colorReset)
+	fmt.Printf("%s✓ Created migration: %s%s\n", colorGreen, filepath, colorReset)
 	fmt.Println("\nNext steps:")
 	fmt.Println("1. Edit the migration file to add your state operations")
-	fmt.Println("2. Run 'migrate up' to apply the migration")
+	fmt.Println("2. Rebuild the tool: make build")
+	fmt.Println("3. Run 'migrate up' to apply the migration")
 }
 
 func sanitizeName(name string) string {
@@ -171,33 +179,16 @@ func sanitizeName(name string) string {
 func loadMigrations() []Migration {
 	var migrations []Migration
 
-	// Scan migrations directory
-	files, err := filepath.Glob(migrationsDir + "/*.go")
-	if err != nil {
-		return migrations
-	}
-
-	for _, file := range files {
-		// Parse version from filename
-		base := filepath.Base(file)
-		parts := strings.SplitN(base, "_", 2)
-		if len(parts) < 2 {
-			continue
-		}
-
-		version, err := strconv.Atoi(parts[0])
-		if err != nil {
-			continue
-		}
-
-		name := strings.TrimSuffix(parts[1], ".go")
-
+	// Load migrations from the registry
+	for version, migrationFunc := range migrationRegistry {
+		m := migrationFunc()
 		migrations = append(migrations, Migration{
 			Version: version,
-			Name:    name,
+			Name:    m.Name,
 		})
 	}
 
+	// Sort by version
 	sort.Slice(migrations, func(i, j int) bool {
 		return migrations[i].Version < migrations[j].Version
 	})
@@ -331,16 +322,40 @@ func migrateDown(steps int) {
 }
 
 func executeMigration(migration Migration, direction string) error {
-	// For now, this is a simplified version
-	// In production, you'd load the actual migration code
-	filename := fmt.Sprintf("%s/%04d_%s.go", migrationsDir, migration.Version, migration.Name)
+	// Load the migration definition from the registry
+	migrationFunc, ok := migrationRegistry[migration.Version]
+	if !ok {
+		return fmt.Errorf("migration %d (%s) not found in registry", migration.Version, migration.Name)
+	}
 
-	fmt.Printf("  File: %s\n", filename)
-	fmt.Printf("  Direction: %s\n", direction)
-	fmt.Println("  Operations: (to be implemented)")
+	// Get the full migration definition with commands
+	fullMigration := migrationFunc()
 
-	// TODO: Parse and execute actual migration commands
-	// This would involve parsing the Go file and executing terraform state commands
+	// Select commands based on direction
+	var commands []Command
+	if direction == "up" {
+		commands = fullMigration.Up
+	} else if direction == "down" {
+		commands = fullMigration.Down
+	} else {
+		return fmt.Errorf("invalid direction: %s", direction)
+	}
+
+	if len(commands) == 0 {
+		fmt.Printf("  %sNo operations defined for %s%s\n", colorYellow, direction, colorReset)
+		return nil
+	}
+
+	// Execute each command
+	for i, cmd := range commands {
+		fmt.Printf("  [%d/%d] %s%s%s\n", i+1, len(commands), colorBlue, cmd.Description, colorReset)
+
+		if err := executeCommand(cmd); err != nil {
+			return fmt.Errorf("command %d failed: %w", i+1, err)
+		}
+
+		fmt.Printf("        %s✓ Complete%s\n", colorGreen, colorReset)
+	}
 
 	return nil
 }
@@ -442,4 +457,70 @@ func runTerraformCommand(args []string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+// executeCommand executes a single migration command
+func executeCommand(cmd Command) error {
+	switch cmd.Type {
+	case string(CommandTypeMove):
+		return executeMoveCommand(cmd)
+	case string(CommandTypeRemove):
+		return executeRemoveCommand(cmd)
+	case string(CommandTypeImport):
+		return executeImportCommand(cmd)
+	default:
+		return fmt.Errorf("unknown command type: %s", cmd.Type)
+	}
+}
+
+// executeMoveCommand executes a terraform state mv command
+func executeMoveCommand(cmd Command) error {
+	if len(cmd.Args) != 2 {
+		return fmt.Errorf("move command requires exactly 2 arguments (source, destination), got %d", len(cmd.Args))
+	}
+
+	source := cmd.Args[0]
+	destination := cmd.Args[1]
+
+	fmt.Printf("        Running: terraform state mv %s %s\n", source, destination)
+
+	args := []string{"state", "mv", source, destination}
+	return runTerraformCommand(args)
+}
+
+// executeRemoveCommand executes a terraform state rm command
+func executeRemoveCommand(cmd Command) error {
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("remove command requires exactly 1 argument (address), got %d", len(cmd.Args))
+	}
+
+	address := cmd.Args[0]
+
+	fmt.Printf("        Running: terraform state rm %s\n", address)
+
+	args := []string{"state", "rm", address}
+	return runTerraformCommand(args)
+}
+
+// executeImportCommand executes a terraform import command
+func executeImportCommand(cmd Command) error {
+	if len(cmd.Args) != 2 {
+		return fmt.Errorf("import command requires exactly 2 arguments (address, id), got %d", len(cmd.Args))
+	}
+
+	address := cmd.Args[0]
+	id := cmd.Args[1]
+
+	fmt.Printf("        Running: terraform import %s %s\n", address, id)
+
+	args := []string{"import", address, id}
+	return runTerraformCommand(args)
+}
+
+// registerMigration registers a migration in the global registry
+func registerMigration(version int, migrationFunc func() Migration) {
+	if _, exists := migrationRegistry[version]; exists {
+		panic(fmt.Sprintf("migration version %d is already registered", version))
+	}
+	migrationRegistry[version] = migrationFunc
 }
