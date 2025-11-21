@@ -88,14 +88,9 @@ jobs:
           files: packer/**
           # files_ignore: docs/static.js
 
-      - name: Exit early if no packer files have changed
-        if: steps.check-packer-changes.outputs.any_changed == 'false'
-        run: |
-          echo "No packer files have changed, exiting."
-          exit 0
-
       - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
+        if: steps.check-packer-changes.outputs.any_changed == 'true'
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
@@ -103,15 +98,18 @@ jobs:
 
       - name: Setup Packer
         uses: hashicorp/setup-packer@main
+        if: steps.check-packer-changes.outputs.any_changed == 'true'
         with:
           version: ${{ env.PKG_VERSION }}
 
       - name: Initialize Packer
+        if: steps.check-packer-changes.outputs.any_changed == 'true'
         run: |
           cd packer
           packer init ubuntu-hardened.pkr.hcl
 
       - name: Validate Packer Template
+        if: steps.check-packer-changes.outputs.any_changed == 'true'
         run: |
           cd packer
           packer validate ubuntu-hardened.pkr.hcl
@@ -122,6 +120,7 @@ jobs:
           PKR_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
       - name: Build AMI with Packer
+        if: steps.check-packer-changes.outputs.any_changed == 'true'
         run: |
           cd packer
           packer build ubuntu-hardened.pkr.hcl
@@ -132,6 +131,7 @@ jobs:
           PKR_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
       - name: Upload Packer Manifest
+        if: steps.check-packer-changes.outputs.any_changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: packer-manifest
