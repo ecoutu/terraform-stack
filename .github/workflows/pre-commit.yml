@@ -1,0 +1,68 @@
+name: Pre-commit Checks
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  pre-commit:
+    name: Run pre-commit hooks
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.13.5"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.4"
+
+      - name: Install TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Install terraform-docs
+        run: |
+          wget -qO- "https://github.com/terraform-docs/terraform-docs/releases/download/v0.20.0/terraform-docs-v0.20.0-linux-amd64.tar.gz" | tar xz
+          sudo mv terraform-docs /usr/local/bin/
+
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+        env:
+          TF_VAR_aws_region: ${{ vars.TF_VAR_aws_region }}
+          TF_VAR_environment: ${{ vars.TF_VAR_environment }}
+          TF_VAR_project_name: ${{ vars.TF_VAR_project_name }}
+          TF_VAR_vpc_cidr: ${{ vars.TF_VAR_vpc_cidr }}
+          TF_VAR_az_count: ${{ vars.TF_VAR_az_count }}
+          TF_VAR_enable_nat_gateway: ${{ vars.TF_VAR_enable_nat_gateway }}
+          TF_VAR_github_org: ${{ vars.TF_VAR_github_org }}
+          TF_VAR_github_repo: ${{ vars.TF_VAR_github_repo }}
+          TF_VAR_github_branches: ${{ vars.TF_VAR_github_branches }}
+          TF_VAR_enable_remote_state: ${{ vars.TF_VAR_enable_remote_state }}
+          TF_VAR_terraform_state_bucket: ${{ vars.TF_VAR_terraform_state_bucket }}
+          TF_VAR_github_token: ${{ secrets.TF_VAR_github_token }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}

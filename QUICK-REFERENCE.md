@@ -17,6 +17,13 @@ cd terraform && terraform destroy # Destroy infrastructure
 ./migrate.sh down                 # Rollback migration
 ./migrate.sh create <name>        # Create new migration
 
+# Git Hooks
+./scripts/setup-dev-env.sh        # Quick setup for git hooks
+make pre-commit-install           # Install pre-commit hooks
+make pre-commit-run               # Run hooks on all files
+make pre-commit-update            # Update hook versions
+make pre-commit-uninstall         # Uninstall hooks
+
 # Make shortcuts
 make help                         # Show all commands
 make build                        # Build migration tool
@@ -335,6 +342,8 @@ docker-compose run --rm terraform <cmd>      # Run one-off command
 
 - [README.md](README.md) - Project overview
 - [DOCKER.md](DOCKER.md) - Docker documentation
+- [GIT-HOOKS.md](GIT-HOOKS.md) - Git hooks and pre-commit setup
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
 - [migrations/README.md](migrations/README.md) - Migration system guide
 - [STATE-MIGRATION.md](STATE-MIGRATION.md) - State migration guide
 - [PASSWORD-SETUP.md](PASSWORD-SETUP.md) - Password management

@@ -8,6 +8,7 @@ AWS infrastructure with VPC, IAM, and CI/CD using modular Terraform and GitHub A
 - AWS CLI configured
 - GitHub repository with Actions enabled
 - **Optional**: Docker for containerized development
+- **Optional**: pre-commit for automated code quality checks (recommended)
 
 ## Features
 
@@ -148,6 +149,99 @@ Use migrations when you need to:
 - [migrations/MIGRATION-SYSTEM.md](migrations/MIGRATION-SYSTEM.md) - Migration system overview and comparison
 - [STATE-MIGRATION.md](STATE-MIGRATION.md) - Migration guide
 
+## Git Hooks
+
+This project uses pre-commit hooks to enforce code quality and commit message standards before code enters the repository.
+
+### Setup
+
+1. Install pre-commit:
+   ```bash
+   pip install pre-commit
+   # or
+   brew install pre-commit
+   ```
+
+2. Install the git hooks:
+   ```bash
+   make pre-commit-install
+   ```
+
+### What Gets Checked
+
+When you commit code, the following checks run automatically:
+
+**Pre-commit checks:**
+- Terraform formatting (`terraform fmt`)
+- Terraform validation (`terraform validate`)
+- Terraform documentation generation
+- Terraform linting with tflint
+- YAML syntax validation
+- Trailing whitespace removal
+- End-of-file fixes
+- Large file detection
+- Go code linting (for migrations) (**temporarily disabled due to Go version compatibility issues**)
+
+**Commit message checks:**
+- Enforces conventional commit format
+- Valid prefixes: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `perf:`, `test:`, `build:`, `ci:`, `chore:`, `revert:`
+
+### Example Commit Messages
+
+✅ Good:
+```
+feat: add VPC peering module
+fix: correct IAM policy for S3 access
+docs: update README with new module
+refactor: reorganize terraform module structure
+```
+
+❌ Bad:
+```
+added new feature
+Fixed bug
+updated documentation
+```
+
+### Bypassing Hooks
+
+Sometimes you need to bypass hooks (use sparingly):
+
+```bash
+# Skip pre-commit hooks
+git commit --no-verify
+
+# Skip specific hooks
+SKIP=terraform_validate git commit -m "feat: work in progress"
+```
+
+### Maintenance
+
+```bash
+# Update hooks to latest versions
+make pre-commit-update
+
+# Run hooks manually on all files
+make pre-commit-run
+
+# Uninstall hooks
+make pre-commit-uninstall
+```
+
+### Troubleshooting
+
+**Hook fails on terraform validate:**
+- Ensure Terraform is initialized: `cd terraform && terraform init`
+- The hook will auto-initialize if needed
+
+**Hook fails on terraform fmt:**
+- Run manually to see specific issues: `terraform fmt -recursive`
+- The hook will auto-format files for you
+
+**tflint errors:**
+- Install tflint: `brew install tflint` or see [tflint installation](https://github.com/terraform-linters/tflint)
+- Initialize tflint plugins: `tflint --init`
+
 ## CI/CD Pipeline
 
 GitHub Actions workflow with:
@@ -162,6 +256,7 @@ See [.github/workflows/terraform.yml](.github/workflows/terraform.yml) and [OIDC
 
 - [QUICK-REFERENCE.md](QUICK-REFERENCE.md) - Common commands
 - [DOCKER.md](DOCKER.md) - Docker usage
+- [GIT-HOOKS.md](GIT-HOOKS.md) - Git hooks and pre-commit setup
 - [PASSWORD-SETUP.md](PASSWORD-SETUP.md) - IAM password setup
 - [OIDC-SETUP.md](OIDC-SETUP.md) - GitHub OIDC setup
 - [GITHUB-SECRETS-SETUP.md](GITHUB-SECRETS-SETUP.md) - Secrets configuration

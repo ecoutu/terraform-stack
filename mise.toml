@@ -1,10 +1,13 @@
 [tools]
 docker-compose = "latest"
 go = "latest"
+golangci-lint = "latest"
 helm = "latest"
 kubectl = "latest"
 packer = "latest"
+pre-commit = "latest"
 terraform = "latest"
+tflint = "latest"
 
 [env]
 PAGER="cat"

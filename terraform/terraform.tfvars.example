@@ -32,7 +32,6 @@ minikube_instance_type = "t3.small"
 # WARNING: Default allows access from anywhere (0.0.0.0/0)
 # Restrict these to your IP address or VPN CIDR for production
 allowed_ssh_cidr_blocks     = ["0.0.0.0/0"]
-allowed_k8s_api_cidr_blocks = ["0.0.0.0/0"]
 
 # Route53 Configuration
 domain_name = "linklayer.ca"

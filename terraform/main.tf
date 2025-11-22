@@ -140,14 +140,7 @@ module "minikube" {
       to_port     = 22
       protocol    = "tcp"
       cidr_blocks = var.allowed_ssh_cidr_blocks
-    },
-    # {
-    #   description = "Kubernetes API Server"
-    #   from_port   = 8443
-    #   to_port     = 8443
-    #   protocol    = "tcp"
-    #   cidr_blocks = var.allowed_k8s_api_cidr_blocks
-    # }
+    }
   ]
 
   tags = {

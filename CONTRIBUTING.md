@@ -19,6 +19,30 @@ Thank you for your interest in contributing! This document provides guidelines f
 - AWS CLI configured with appropriate credentials
 - Go 1.21+ (for migration tool development)
 - Docker (optional, for containerized development)
+- **pre-commit** (strongly recommended for automated checks)
+
+### Install Git Hooks
+
+We use pre-commit hooks to enforce code quality automatically. Install them before making changes:
+
+```bash
+# Install pre-commit (if not already installed)
+pip install pre-commit
+# or
+brew install pre-commit
+
+# Install the git hooks
+make pre-commit-install
+```
+
+The hooks will automatically:
+- Format Terraform code with `terraform fmt`
+- Validate Terraform configuration
+- Check commit message format
+- Run linting checks
+- Generate module documentation
+
+See [GIT-HOOKS.md](GIT-HOOKS.md) for complete documentation.
 
 ### Local Testing
 ```bash
@@ -33,26 +57,52 @@ terraform validate
 
 # Build migration tool
 make build
+
+# Run pre-commit checks manually
+make pre-commit-run
 ```
 
 ## Commit Convention
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/) for clear and semantic commit messages:
+We follow [Conventional Commits](https://www.conventionalcommits.org/) for clear and semantic commit messages. This is **enforced by git hooks** when you commit.
 
+### Valid Commit Types
 - `feat:` New features
 - `fix:` Bug fixes
 - `docs:` Documentation changes
+- `style:` Code style changes (formatting, etc.)
 - `refactor:` Code refactoring
+- `perf:` Performance improvements
 - `test:` Test additions or modifications
+- `build:` Build system or dependency changes
+- `ci:` CI/CD configuration changes
 - `chore:` Maintenance tasks
+- `revert:` Reverting previous commits
 
-**Examples:**
+### Examples
+✅ **Good:**
 ```
 feat: add EC2 instance module
 fix: correct security group CIDR blocks
 docs: update README with new variables
 refactor: simplify IAM role structure
 ```
+
+❌ **Bad (will be rejected):**
+```
+added EC2 module
+Fixed security groups
+Update docs
+```
+
+### Bypassing Hooks
+
+Only bypass hooks when absolutely necessary (e.g., emergency fixes):
+```bash
+git commit --no-verify -m "fix: emergency security patch"
+```
+
+**Note:** PRs with bypassed checks may face additional scrutiny during review.
 
 ## Pull Request Process
 

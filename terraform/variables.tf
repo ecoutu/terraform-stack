@@ -101,12 +101,6 @@ variable "allowed_ssh_cidr_blocks" {
   default     = ["0.0.0.0/0"]
 }
 
-variable "allowed_k8s_api_cidr_blocks" {
-  description = "List of CIDR blocks allowed to access Kubernetes API Server (override to restrict access). Defaults to 0.0.0.0/0 to preserve existing behavior but should be tightened in production."
-  type        = list(string)
-  default     = ["0.0.0.0/0"]
-}
-
 variable "domain_name" {
   description = "Domain name for Route53 hosted zones"
   type        = string
@@ -122,4 +116,3 @@ variable "ssh_public_key" {
     error_message = "The ssh_public_key must be a valid SSH public key (ssh-rsa, ssh-ed25519, or ecdsa format)."
   }
 }
-

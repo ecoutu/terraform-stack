@@ -1,4 +1,4 @@
-.PHONY: help build migrate-status migrate-up migrate-down migrate-create clean test docker-build docker-up docker-down docker-shell docker-dev
+.PHONY: help build migrate-status migrate-up migrate-down migrate-create clean test docker-build docker-up docker-down docker-shell docker-dev pre-commit-install pre-commit-update pre-commit-run pre-commit-uninstall
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -71,5 +71,27 @@ docker-migrate: ## Run migration command in container (usage: make docker-migrat
 docker-clean: ## Clean up Docker resources
 	@docker compose down -v
 	@docker system prune -f
+
+# Pre-commit hooks targets
+pre-commit-install: ## Install pre-commit hooks
+	@if ! command -v pre-commit >/dev/null 2>&1; then \
+		echo "Error: pre-commit is not installed. Install it with: pip install pre-commit"; \
+		exit 1; \
+	fi
+	@pre-commit install
+	@pre-commit install --hook-type commit-msg
+	@echo "✓ Pre-commit hooks installed"
+
+pre-commit-update: ## Update pre-commit hooks to latest versions
+	@pre-commit autoupdate
+	@echo "✓ Pre-commit hooks updated"
+
+pre-commit-run: ## Run pre-commit hooks on all files
+	@pre-commit run --all-files
+
+pre-commit-uninstall: ## Uninstall pre-commit hooks
+	@pre-commit uninstall
+	@pre-commit uninstall --hook-type commit-msg
+	@echo "✓ Pre-commit hooks uninstalled"
 
 .DEFAULT_GOAL := help

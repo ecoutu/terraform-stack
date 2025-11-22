@@ -1,4 +1,4 @@
-name: Terraform CI/CD
+name: Build and Deploy
 
 on:
   push:

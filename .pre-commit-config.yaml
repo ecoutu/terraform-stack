@@ -1,0 +1,88 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  # General pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+        args: ['--unsafe']  # Allow custom YAML tags
+      - id: check-added-large-files
+        name: Check for large files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: mixed-line-ending
+        name: Check for mixed line endings
+
+  # Terraform formatting and validation
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.1
+    hooks:
+      - id: terraform_fmt
+        name: Terraform format
+        description: Rewrites all Terraform configuration files to canonical format
+        args:
+          - --args=-recursive
+          - --args=-diff
+
+      - id: terraform_validate
+        name: Terraform validate
+        description: Validates all Terraform configuration files
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+          - --tf-init-args=-backend=false
+          - --tf-init-args=-upgrade=false
+
+      - id: terraform_docs
+        name: Terraform docs
+        description: Generate Terraform docs for modules
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+        files: ^terraform/modules/
+
+      - id: terraform_tflint
+        name: Terraform lint
+        description: Lints Terraform code
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+          - --args=--force
+
+  # Conventional commits validation
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        name: Validate commit message
+        stages: [commit-msg]
+        args:
+          - feat
+          - fix
+          - docs
+          - style
+          - refactor
+          - perf
+          - test
+          - build
+          - ci
+          - chore
+          - revert
+
+  # Golang formatting and linting for migrations
+  # Note: golangci-lint disabled due to installation issues
+  # TODO: Re-enable after upgrading to compatible Go version
+  # - repo: https://github.com/golangci/golangci-lint
+  #   rev: v1.61.0
+  #   hooks:
+  #     - id: golangci-lint
+  #       name: Go lint
+  #       files: ^migrations/
+  #       args:
+  #         - --timeout=5m

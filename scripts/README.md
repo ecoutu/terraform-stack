@@ -4,6 +4,38 @@ This directory contains helper scripts for managing the infrastructure.
 
 ## Available Scripts
 
+### setup-dev-env.sh
+
+Quick setup script for configuring the development environment and installing git hooks.
+
+**Usage:**
+```bash
+./scripts/setup-dev-env.sh
+```
+
+**What it does:**
+- Checks for required tools (pre-commit, Terraform, tflint, Go)
+- Installs git hooks for pre-commit and commit-msg validation
+- Initializes tflint plugins
+- Provides helpful next steps and tips
+
+**Requirements:**
+- pre-commit must be installed (`pip install pre-commit` or `brew install pre-commit`)
+- Recommended: Terraform, tflint, Go for full hook functionality
+
+**First-time setup:**
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Run setup script
+./scripts/setup-dev-env.sh
+
+# Follow the next steps printed by the script
+```
+
+See [GIT-HOOKS.md](../GIT-HOOKS.md) for detailed git hooks documentation.
+
 ### ssh-minikube.sh
 
 SSH into the Minikube EC2 instance with automatic port forwarding for Kubernetes services.

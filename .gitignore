@@ -33,3 +33,6 @@ terraform.tfstate.backup_*
 # Docker
 .env
 docker-compose.override.yml
+
+# Pre-commit
+.pre-commit-cache/
