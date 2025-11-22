@@ -4,14 +4,16 @@ This directory contains Packer templates for building hardened Ubuntu AMIs.
 
 ## Overview
 
-The `ubuntu-hardened.pkr.hcl` template creates a security-hardened Ubuntu 24.04 AMI with:
+The `minikube.pkr.hcl` template creates a security-hardened Ubuntu 24.04 AMI with:
 
+- **Hostname**: Set to `minikube`
 - **Custom User**: Creates `ecoutu` user with sudo access
 - **SSH Hardening**: Disables password auth, root login, configures secure defaults
 - **Firewall**: UFW configured with default deny incoming
 - **Intrusion Prevention**: fail2ban configured for SSH protection
 - **Automatic Updates**: Unattended security updates enabled
 - **Kernel Hardening**: Sysctl parameters for network security
+- **Kubernetes**: Docker, kubectl, minikube, and Helm pre-installed
 - **Clean State**: Removes default ubuntu user on first boot
 
 ## Prerequisites
@@ -79,10 +81,10 @@ The `ubuntu-hardened.pkr.hcl` template creates a security-hardened Ubuntu 24.04 
 cd packer
 
 # Validate template
-packer validate ubuntu-hardened.pkr.hcl
+packer validate minikube.pkr.hcl
 
 # Build AMI
-packer build ubuntu-hardened.pkr.hcl
+packer build minikube.pkr.hcl
 ```
 
 ### Build with Custom Variables
@@ -91,8 +93,8 @@ packer build ubuntu-hardened.pkr.hcl
 packer build \
   -var 'aws_region=us-west-2' \
   -var 'instance_type=t3.medium' \
-  -var 'ami_name_prefix=my-custom-ami' \
-  ubuntu-hardened.pkr.hcl
+  -var 'ami_name_prefix=my-custom-minikube' \
+  minikube.pkr.hcl
 ```
 
 ### Build with Variable File
@@ -102,14 +104,14 @@ Create `variables.pkrvars.hcl`:
 ```hcl
 aws_region      = "us-east-1"
 instance_type   = "t3.small"
-ami_name_prefix = "prod-ubuntu-hardened"
+ami_name_prefix = "prod-minikube"
 ssh_public_key  = "ssh-rsa AAAAB3NzaC1yc2E..."
 ```
 
 Build with variables:
 
 ```bash
-packer build -var-file=variables.pkrvars.hcl ubuntu-hardened.pkr.hcl
+packer build -var-file=variables.pkrvars.hcl minikube.pkr.hcl
 ```
 
 ## Variables
@@ -118,7 +120,7 @@ packer build -var-file=variables.pkrvars.hcl ubuntu-hardened.pkr.hcl
 |----------|-------------|---------|
 | `aws_region` | AWS region to build in | `us-east-1` |
 | `instance_type` | EC2 instance type for build | `t3.small` |
-| `ami_name_prefix` | Prefix for AMI name | `ubuntu-hardened-ecoutu` |
+| `ami_name_prefix` | Prefix for AMI name | `minikube-ecoutu` |
 | `ssh_public_key` | SSH public key for ecoutu user | (provided in template) |
 
 ## Security Features
@@ -185,13 +187,13 @@ module "minikube" {
 Or use data source to find latest:
 
 ```hcl
-data "aws_ami" "hardened_ubuntu" {
+data "aws_ami" "minikube" {
   most_recent = true
   owners      = ["self"]
 
   filter {
     name   = "name"
-    values = ["ubuntu-hardened-ecoutu-*"]
+    values = ["minikube-ecoutu-*"]
   }
 
   filter {
@@ -203,7 +205,7 @@ data "aws_ami" "hardened_ubuntu" {
 module "minikube" {
   source = "./modules/ec2-instance"
 
-  ami_id = data.aws_ami.hardened_ubuntu.id
+  ami_id = data.aws_ami.minikube.id
   # ... rest of configuration
 }
 ```
@@ -283,11 +285,11 @@ Edit the `ssh_public_key` variable or pass via `-var` flag:
 ```bash
 packer build \
   -var "ssh_public_key=$(cat ~/.ssh/id_rsa.pub)" \
-  ubuntu-hardened.pkr.hcl
+  minikube.pkr.hcl
 ```
 
 ### Customize Hardening
-Edit the provisioner shell blocks in `ubuntu-hardened.pkr.hcl` to add or modify security settings.
+Edit the provisioner shell blocks in `minikube.pkr.hcl` to add or modify security settings.
 
 ## References
 

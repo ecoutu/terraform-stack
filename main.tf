@@ -89,14 +89,14 @@ module "ssh_key" {
   }
 }
 
-# Packer-built Hardened Ubuntu AMI
-data "aws_ami" "packer_hardened_ubuntu" {
+# Packer-built Minikube AMI
+data "aws_ami" "packer_minikube" {
   most_recent = true
   owners      = ["self"]
 
   filter {
     name   = "name"
-    values = ["ubuntu-hardened-ecoutu-*"]
+    values = ["minikube-ecoutu-*"]
   }
 
   filter {
@@ -123,7 +123,7 @@ module "minikube" {
   name_prefix   = "${var.environment}-minikube"
   vpc_id        = module.vpc.vpc_id
   key_name      = module.ssh_key.key_name
-  ami_id        = data.aws_ami.packer_hardened_ubuntu.id
+  ami_id        = data.aws_ami.packer_minikube.id
 
   # Minikube-specific security group rules
   security_group_ingress_rules = [
@@ -288,7 +288,7 @@ module "github_secrets" {
       # Packer variables
       "PKR_VAR_aws_region"      = var.aws_region
       "PKR_VAR_instance_type"   = "t3.small"
-      "PKR_VAR_ami_name_prefix" = "ubuntu-hardened-ecoutu"
+      "PKR_VAR_ami_name_prefix" = "minikube-ecoutu"
     }
   )
 }

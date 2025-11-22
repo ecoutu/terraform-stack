@@ -20,7 +20,7 @@ variable "instance_type" {
 
 variable "ami_name_prefix" {
   type    = string
-  default = "ubuntu-hardened-ecoutu"
+  default = "minikube-ecoutu"
 }
 
 variable "ssh_public_key" {
@@ -59,7 +59,7 @@ source "amazon-ebs" "ubuntu" {
 }
 
 build {
-  name    = "ubuntu-hardened"
+  name    = "minikube"
   sources = ["source.amazon-ebs.ubuntu"]
 
   # Update system packages
@@ -93,6 +93,15 @@ build {
       "  htop \\",
       "  net-tools \\",
       "  jq"
+    ]
+  }
+
+  # Set hostname
+  provisioner "shell" {
+    inline = [
+      "echo 'Setting hostname to minikube...'",
+      "sudo hostnamectl set-hostname minikube",
+      "echo '127.0.0.1 minikube' | sudo tee -a /etc/hosts"
     ]
   }
 

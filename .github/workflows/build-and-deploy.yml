@@ -106,13 +106,13 @@ jobs:
         if: steps.check-packer-changes.outputs.any_changed == 'true'
         run: |
           cd packer
-          packer init ubuntu-hardened.pkr.hcl
+          packer init minikube.pkr.hcl
 
       - name: Validate Packer Template
         if: steps.check-packer-changes.outputs.any_changed == 'true'
         run: |
           cd packer
-          packer validate ubuntu-hardened.pkr.hcl
+          packer validate minikube.pkr.hcl
         env:
           PKR_VAR_aws_region: ${{ vars.PKR_VAR_aws_region }}
           PKR_VAR_instance_type: ${{ vars.PKR_VAR_instance_type }}
@@ -123,7 +123,7 @@ jobs:
         if: steps.check-packer-changes.outputs.any_changed == 'true'
         run: |
           cd packer
-          packer build ubuntu-hardened.pkr.hcl
+          packer build minikube.pkr.hcl
         env:
           PKR_VAR_aws_region: ${{ vars.PKR_VAR_aws_region }}
           PKR_VAR_instance_type: ${{ vars.PKR_VAR_instance_type }}
