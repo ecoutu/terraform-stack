@@ -216,7 +216,7 @@ On failure, the workflow:
 **Insufficient resources:**
 ```
 Solution: Increase Minikube resources
-minikube start --cpus=4 --memory=8192
+minikube start --cpus=4 --memory=8192m
 ```
 
 **Storage issues:**
