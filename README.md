@@ -322,6 +322,7 @@ After successful deployment to Minikube, applications are available at:
 - Jellyfin: http://\<minikube-ip\>:30085
 
 For more details, see:
+- [Helm Deployment Guide](HELM-DEPLOYMENT.md) - Complete automation documentation
 - [Helm Chart Documentation](helm/media-stack/README.md)
 - [Workflow Configuration](.github/workflows/helm-deploy.yml)
 
@@ -335,4 +336,5 @@ For more details, see:
 - [GITHUB-SECRETS-SETUP.md](GITHUB-SECRETS-SETUP.md) - Secrets configuration
 - [STATE-MIGRATION.md](STATE-MIGRATION.md) - State migrations
 - [migrations/README.md](migrations/README.md) - Migration system
+- [HELM-DEPLOYMENT.md](HELM-DEPLOYMENT.md) - Helm deployment automation
 - [helm/media-stack/README.md](helm/media-stack/README.md) - Media stack Helm chart

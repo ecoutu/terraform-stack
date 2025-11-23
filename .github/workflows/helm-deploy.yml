@@ -182,7 +182,7 @@ jobs:
                 exit 1
               fi
               
-              PREV_REVISION=$(($${{ steps.check_release.outputs.current_revision }} - 1))
+              PREV_REVISION=$((${{ steps.check_release.outputs.current_revision }} - 1))
               if [ $PREV_REVISION -lt 1 ]; then
                 echo "::error::No previous revision to rollback to"
                 exit 1
