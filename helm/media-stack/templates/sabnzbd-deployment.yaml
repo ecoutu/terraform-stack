@@ -1,0 +1,71 @@
+{{- if .Values.sabnzbd.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "media-stack.fullname" . }}-sabnzbd
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sabnzbd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "media-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: sabnzbd
+  template:
+    metadata:
+      labels:
+        {{- include "media-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: sabnzbd
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+      - name: create-download
+        image: busybox:latest
+        command: ['sh', '-c', 'mkdir -p /downloads/complete /downloads/incomplete && chmod 755 /downloads/complete /downloads/incomplete && chown 1000:1000 /downloads/complete /downloads/incomplete']
+        volumeMounts:
+        - name: downloads
+          mountPath: /downloads
+      containers:
+      - name: sabnzbd
+        image: "{{ .Values.sabnzbd.image.repository }}:{{ .Values.sabnzbd.image.tag }}"
+        imagePullPolicy: {{ .Values.sabnzbd.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 20
+        env:
+        - name: PUID
+          value: {{ .Values.sabnzbd.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.sabnzbd.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.sabnzbd.env.TZ | quote }}
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: downloads
+          mountPath: /downloads
+        resources:
+          {{- toYaml (default .Values.global.resources .Values.sabnzbd.resources) | nindent 10 }}
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-sabnzbd-config
+      - name: downloads
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-downloads
+{{- end }}

@@ -1,0 +1,201 @@
+# Global settings
+global:
+  storageClass: "standard"
+  timezone: "America/Toronto"
+
+  # Default resource limits for all applications
+  # Individual services can override these values
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+# Persistent storage configuration
+persistence:
+  enabled: true
+  # Access mode for shared volumes (media and downloads)
+  # ReadWriteOnce: Only works on single-node clusters (Minikube, microk8s)
+  # ReadWriteMany: Required for multi-node clusters (requires NFS, CephFS, or similar)
+  sharedAccessMode: ReadWriteOnce
+  config:
+    size: 5Gi
+  media:
+    size: 50Gi
+  downloads:
+    size: 20Gi
+
+# SABnzbd - Usenet downloader
+sabnzbd:
+  enabled: true
+  image:
+    repository: linuxserver/sabnzbd
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 8080
+    nodePort: 30081
+
+  env:
+    PUID: "1000"
+    PGID: "1000"
+    TZ: "America/Toronto"
+
+  persistence:
+    config:
+      enabled: true
+      size: 1Gi
+    downloads:
+      enabled: true
+      size: 20Gi
+
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+
+# Sonarr - TV show management
+sonarr:
+  enabled: true
+  image:
+    repository: ghcr.io/linuxserver/sonarr
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 8989
+    nodePort: 30082
+
+  env:
+    PUID: "1000"
+    PGID: "1000"
+    TZ: "America/Toronto"
+
+  persistence:
+    config:
+      enabled: true
+      size: 1Gi
+    media:
+      enabled: true
+    downloads:
+      enabled: true
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+
+# Radarr - Movie management
+radarr:
+  enabled: true
+  image:
+    repository: lscr.io/linuxserver/radarr
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 7878
+    nodePort: 30083
+
+  env:
+    PUID: "1000"
+    PGID: "1000"
+    TZ: "America/Toronto"
+
+  persistence:
+    config:
+      enabled: true
+      size: 1Gi
+    media:
+      enabled: true
+    downloads:
+      enabled: true
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+
+# Bazarr - Subtitle management
+bazarr:
+  enabled: true
+  image:
+    repository: linuxserver/bazarr
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 6767
+    nodePort: 30084
+
+  env:
+    PUID: "1000"
+    PGID: "1000"
+    TZ: "America/Toronto"
+
+  persistence:
+    config:
+      enabled: true
+      size: 1Gi
+    media:
+      enabled: true
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 50m
+      memory: 256Mi
+
+# Jellyfin - Media server
+jellyfin:
+  enabled: true
+  image:
+    repository: jellyfin/jellyfin
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 8096
+    nodePort: 30085
+
+  env:
+    PUID: "1000"
+    PGID: "1000"
+    TZ: "America/Toronto"
+
+  persistence:
+    config:
+      enabled: true
+      size: 2Gi
+    media:
+      enabled: true
+    cache:
+      enabled: true
+      size: 5Gi
+
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi

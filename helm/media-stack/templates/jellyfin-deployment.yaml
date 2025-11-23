@@ -1,0 +1,90 @@
+{{- if .Values.jellyfin.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "media-stack.fullname" . }}-jellyfin
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: jellyfin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "media-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: jellyfin
+  template:
+    metadata:
+      labels:
+        {{- include "media-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: jellyfin
+    spec:
+      initContainers:
+      - name: create-media-dirs
+        image: busybox:latest
+        command: ['sh', '-c', 'mkdir -p /media/tv /media/movies && chmod 755 /media/tv /media/movies && chown 1000:1000 /media/tv /media/movies']
+        volumeMounts:
+        - name: media
+          mountPath: /media
+      containers:
+      - name: jellyfin
+        image: "{{ .Values.jellyfin.image.repository }}:{{ .Values.jellyfin.image.tag }}"
+        imagePullPolicy: {{ .Values.jellyfin.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8096
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8096
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8096
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          failureThreshold: 6
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+              - ALL
+        env:
+        - name: PUID
+          value: {{ .Values.jellyfin.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.jellyfin.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.jellyfin.env.TZ | quote }}
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: media
+          mountPath: /tv
+          subPath: tv
+        - name: media
+          mountPath: /movies
+          subPath: movies
+        - name: cache
+          mountPath: /cache
+        resources:
+          {{- toYaml (default .Values.global.resources .Values.jellyfin.resources) | nindent 10 }}
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-jellyfin-config
+      - name: media
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-media
+      - name: cache
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-jellyfin-cache
+{{- end }}

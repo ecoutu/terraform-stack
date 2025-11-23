@@ -1,0 +1,79 @@
+{{- if .Values.bazarr.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "media-stack.fullname" . }}-bazarr
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bazarr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "media-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: bazarr
+  template:
+    metadata:
+      labels:
+        {{- include "media-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: bazarr
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+      - name: create-media-dirs
+        image: busybox:latest
+        command: ['sh', '-c', 'mkdir -p /media/tv /media/movies && chmod 755 /media/tv /media/movies && chown 1000:1000 /media/tv /media/movies']
+        volumeMounts:
+        - name: media
+          mountPath: /media
+      containers:
+      - name: bazarr
+        image: "{{ .Values.bazarr.image.repository }}:{{ .Values.bazarr.image.tag }}"
+        imagePullPolicy: {{ .Values.bazarr.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 6767
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 6767
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 6767
+          initialDelaySeconds: 90
+          periodSeconds: 20
+          failureThreshold: 6
+        env:
+        - name: PUID
+          value: {{ .Values.bazarr.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.bazarr.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.bazarr.env.TZ | quote }}
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: media
+          mountPath: /tv
+          subPath: tv
+        - name: media
+          mountPath: /movies
+          subPath: movies
+        resources:
+          {{- toYaml (default .Values.global.resources .Values.bazarr.resources) | nindent 10 }}
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-bazarr-config
+      - name: media
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-media
+{{- end }}

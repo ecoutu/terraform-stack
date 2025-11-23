@@ -1,0 +1,83 @@
+{{- if .Values.sonarr.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "media-stack.fullname" . }}-sonarr
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sonarr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "media-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: sonarr
+  template:
+    metadata:
+      labels:
+        {{- include "media-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: sonarr
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+      - name: create-media-dirs
+        image: busybox:latest
+        command: ['sh', '-c', 'mkdir -p /media/tv && chmod 755 /media/tv && chown 1000:1000 /media/tv']
+        volumeMounts:
+        - name: media
+          mountPath: /media
+      containers:
+      - name: sonarr
+        image: "{{ .Values.sonarr.image.repository }}:{{ .Values.sonarr.image.tag }}"
+        imagePullPolicy: {{ .Values.sonarr.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8989
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8989
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8989
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 6
+        env:
+        - name: PUID
+          value: {{ .Values.sonarr.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.sonarr.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.sonarr.env.TZ | quote }}
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: media
+          mountPath: /tv
+          subPath: tv
+        - name: downloads
+          mountPath: /downloads
+        resources:
+          {{- toYaml (default .Values.global.resources .Values.sonarr.resources) | nindent 10 }}
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-sonarr-config
+      - name: media
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-media
+      - name: downloads
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-downloads
+{{- end }}

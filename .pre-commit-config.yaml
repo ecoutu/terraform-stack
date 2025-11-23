@@ -12,6 +12,7 @@ repos:
       - id: check-yaml
         name: Check YAML syntax
         args: ['--unsafe']  # Allow custom YAML tags
+        exclude: ^helm/.*/templates/.*\.yaml$  # Exclude Helm templates (they're Go templates, not pure YAML)
       - id: check-added-large-files
         name: Check for large files
         args: ['--maxkb=1000']

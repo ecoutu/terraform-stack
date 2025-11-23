@@ -1,0 +1,19 @@
+# Metrics Server configuration
+image:
+  repository: registry.k8s.io/metrics-server/metrics-server
+  tag: v0.7.2
+  pullPolicy: IfNotPresent
+
+# For minikube/development environments, you may need to skip TLS verification
+insecureTLS: true
+
+# Additional arguments to pass to metrics-server
+extraArgs: []
+
+resources:
+  requests:
+    cpu: 150m
+    memory: 256Mi
+  limits:
+    cpu: 300m
+    memory: 512Mi
