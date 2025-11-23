@@ -49,7 +49,7 @@ sabnzbd:
   enabled: true
   image:
     repository: lscr.io/linuxserver/sabnzbd
-    tag: latest
+    tag: 4.2.0
     pullPolicy: IfNotPresent
 
   service:
@@ -83,7 +83,7 @@ sonarr:
   enabled: true
   image:
     repository: lscr.io/linuxserver/sonarr
-    tag: latest
+    tag: 4.0.0
     pullPolicy: IfNotPresent
 
   service:
@@ -120,7 +120,7 @@ radarr:
   enabled: true
   image:
     repository: lscr.io/linuxserver/radarr
-    tag: latest
+    tag: 5.2.0
     pullPolicy: IfNotPresent
 
   service:
@@ -157,7 +157,7 @@ bazarr:
   enabled: true
   image:
     repository: lscr.io/linuxserver/bazarr
-    tag: latest
+    tag: 23.12.2
     pullPolicy: IfNotPresent
 
   service:
@@ -191,7 +191,7 @@ jellyfin:
   enabled: true
   image:
     repository: lscr.io/linuxserver/jellyfin
-    tag: latest
+    tag: 10.8.10
     pullPolicy: IfNotPresent
 
   service:
