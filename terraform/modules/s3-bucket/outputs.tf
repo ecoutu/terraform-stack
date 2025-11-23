@@ -1,0 +1,24 @@
+output "bucket_id" {
+  description = "The ID (name) of the bucket"
+  value       = aws_s3_bucket.media.id
+}
+
+output "bucket_arn" {
+  description = "The ARN of the bucket"
+  value       = aws_s3_bucket.media.arn
+}
+
+output "bucket_domain_name" {
+  description = "The domain name of the bucket"
+  value       = aws_s3_bucket.media.bucket_domain_name
+}
+
+output "bucket_regional_domain_name" {
+  description = "The regional domain name of the bucket"
+  value       = aws_s3_bucket.media.bucket_regional_domain_name
+}
+
+output "bucket_region" {
+  description = "The AWS region this bucket resides in"
+  value       = aws_s3_bucket.media.region
+}

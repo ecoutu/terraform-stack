@@ -208,3 +208,30 @@ output "minikube_private_fqdn" {
   description = "The private fully qualified domain name for the minikube instance"
   value       = module.route53.private_record_fqdns["minikube_private"]
 }
+
+# S3 Media Bucket Outputs
+output "media_bucket_id" {
+  description = "ID of the media storage S3 bucket"
+  value       = module.media_bucket.bucket_id
+}
+
+output "media_bucket_arn" {
+  description = "ARN of the media storage S3 bucket"
+  value       = module.media_bucket.bucket_arn
+}
+
+output "media_bucket_region" {
+  description = "AWS region of the media storage S3 bucket"
+  value       = module.media_bucket.bucket_region
+}
+
+# Minikube IAM Role Outputs
+output "minikube_role_arn" {
+  description = "ARN of the Minikube IAM role"
+  value       = module.minikube_role.role_arn
+}
+
+output "minikube_instance_profile_name" {
+  description = "Name of the Minikube instance profile"
+  value       = module.minikube_role.instance_profile_name
+}

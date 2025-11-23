@@ -89,6 +89,80 @@ module "ssh_key" {
   }
 }
 
+# S3 Bucket for Media Stack Storage
+module "media_bucket" {
+  source = "./modules/s3-bucket"
+
+  bucket_name                = "${var.environment}-${var.project_name}-media"
+  enable_versioning          = false
+  enable_lifecycle_rules     = true
+  enable_intelligent_tiering = true
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    Purpose     = "Media Stack Storage"
+  }
+}
+
+# IAM Role for Minikube EC2 Instance with S3 Access
+module "minikube_role" {
+  source = "./modules/iam-role"
+
+  role_name        = "${var.environment}-minikube-role"
+  role_description = "IAM role for Minikube EC2 instance with S3 media bucket access"
+
+  trusted_services = ["ec2.amazonaws.com"]
+
+  create_instance_profile = true
+  instance_profile_name   = "${var.environment}-minikube-instance-profile"
+
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" # For Systems Manager access
+  ]
+
+  custom_policies = {
+    s3_media_access = {
+      name        = "${var.environment}-minikube-s3-media-access"
+      description = "Policy for accessing media S3 bucket"
+      policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+          {
+            Sid    = "S3MediaBucketAccess"
+            Effect = "Allow"
+            Action = [
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:DeleteObject",
+              "s3:ListBucket"
+            ]
+            Resource = [
+              module.media_bucket.bucket_arn,
+              "${module.media_bucket.bucket_arn}/*"
+            ]
+          },
+          {
+            Sid    = "S3MediaBucketList"
+            Effect = "Allow"
+            Action = [
+              "s3:ListBucket",
+              "s3:GetBucketLocation"
+            ]
+            Resource = module.media_bucket.bucket_arn
+          }
+        ]
+      })
+    }
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    Purpose     = "Minikube S3 Access"
+  }
+}
+
 # Packer-built Minikube AMI
 data "aws_ami" "packer_minikube" {
   most_recent = true
@@ -124,6 +198,9 @@ module "minikube" {
   vpc_id        = module.vpc.vpc_id
   key_name      = module.ssh_key.key_name
   ami_id        = data.aws_ami.packer_minikube.id
+
+  # Attach IAM instance profile for S3 access
+  iam_instance_profile = module.minikube_role.instance_profile_name
 
   # Set hostname to minikube
   user_data = <<-EOF

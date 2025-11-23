@@ -66,6 +66,7 @@ resource "aws_instance" "this" {
   user_data                   = var.user_data
   associate_public_ip_address = var.associate_public_ip_address
   monitoring                  = var.enable_monitoring
+  iam_instance_profile        = var.iam_instance_profile
 
   root_block_device {
     volume_size = var.root_block_device_volume_size
