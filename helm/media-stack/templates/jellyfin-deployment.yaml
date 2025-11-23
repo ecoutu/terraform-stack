@@ -28,6 +28,20 @@ spec:
         - name: http
           containerPort: 8096
           protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8096
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8096
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          failureThreshold: 6
         env:
         - name: PUID
           value: {{ .Values.jellyfin.env.PUID | quote }}

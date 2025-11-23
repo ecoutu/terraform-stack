@@ -28,6 +28,22 @@ spec:
         - name: http
           containerPort: 8989
           protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8989
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8989
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 6
         env:
         - name: PUID
           value: {{ .Values.sonarr.env.PUID | quote }}

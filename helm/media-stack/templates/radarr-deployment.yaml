@@ -28,6 +28,20 @@ spec:
         - name: http
           containerPort: 7878
           protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 7878
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 7878
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          failureThreshold: 5
         env:
         - name: PUID
           value: {{ .Values.radarr.env.PUID | quote }}

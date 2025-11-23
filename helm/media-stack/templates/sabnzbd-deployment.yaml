@@ -28,6 +28,16 @@ spec:
         - name: http
           containerPort: 8080
           protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 20
         env:
         - name: PUID
           value: {{ .Values.sabnzbd.env.PUID | quote }}
