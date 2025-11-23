@@ -1,0 +1,52 @@
+{{- if .Values.bazarr.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "media-stack.fullname" . }}-bazarr
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bazarr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "media-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: bazarr
+  template:
+    metadata:
+      labels:
+        {{- include "media-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: bazarr
+    spec:
+      containers:
+      - name: bazarr
+        image: "{{ .Values.bazarr.image.repository }}:{{ .Values.bazarr.image.tag }}"
+        imagePullPolicy: {{ .Values.bazarr.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 6767
+          protocol: TCP
+        env:
+        - name: PUID
+          value: {{ .Values.bazarr.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.bazarr.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.bazarr.env.TZ | quote }}
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: media
+          mountPath: /media
+        resources:
+          {{- toYaml .Values.bazarr.resources | nindent 10 }}
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-bazarr-config
+      - name: media
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-media
+{{- end }}

@@ -1,0 +1,52 @@
+{{- if .Values.sabnzbd.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "media-stack.fullname" . }}-sabnzbd
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sabnzbd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "media-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: sabnzbd
+  template:
+    metadata:
+      labels:
+        {{- include "media-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: sabnzbd
+    spec:
+      containers:
+      - name: sabnzbd
+        image: "{{ .Values.sabnzbd.image.repository }}:{{ .Values.sabnzbd.image.tag }}"
+        imagePullPolicy: {{ .Values.sabnzbd.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: PUID
+          value: {{ .Values.sabnzbd.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.sabnzbd.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.sabnzbd.env.TZ | quote }}
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: downloads
+          mountPath: /downloads
+        resources:
+          {{- toYaml .Values.sabnzbd.resources | nindent 10 }}
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-sabnzbd-config
+      - name: downloads
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-downloads
+{{- end }}

@@ -1,0 +1,224 @@
+# Global settings
+global:
+  storageClass: "standard"
+  timezone: "America/Toronto"
+
+# Metrics Server - Resource monitoring
+metricsServer:
+  enabled: true
+  image:
+    repository: registry.k8s.io/metrics-server/metrics-server
+    tag: v0.7.2
+    pullPolicy: IfNotPresent
+
+  # For minikube/development environments, you may need to skip TLS verification
+  insecureTLS: true
+
+  # Additional arguments to pass to metrics-server
+  extraArgs: []
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 200Mi
+    limits:
+      cpu: 200m
+      memory: 400Mi
+
+# Persistent storage configuration
+persistence:
+  enabled: true
+  config:
+    size: 5Gi
+  media:
+    size: 50Gi
+  downloads:
+    size: 20Gi
+
+# Resource limits
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# SABnzbd - Usenet downloader
+sabnzbd:
+  enabled: true
+  image:
+    repository: lscr.io/linuxserver/sabnzbd
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 8080
+    nodePort: 30081
+
+  env:
+    PUID: "1000"
+    PGID: "1000"
+    TZ: "America/Toronto"
+
+  persistence:
+    config:
+      enabled: true
+      size: 1Gi
+    downloads:
+      enabled: true
+      size: 20Gi
+
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2Gi
+    requests:
+      cpu: 300m
+      memory: 512Mi
+
+# Sonarr - TV show management
+sonarr:
+  enabled: true
+  image:
+    repository: lscr.io/linuxserver/sonarr
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 8989
+    nodePort: 30082
+
+  env:
+    PUID: "1000"
+    PGID: "1000"
+    TZ: "America/Toronto"
+
+  persistence:
+    config:
+      enabled: true
+      size: 1Gi
+    media:
+      enabled: true
+      size: 50Gi
+    downloads:
+      enabled: true
+      size: 20Gi
+
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1Gi
+    requests:
+      cpu: 150m
+      memory: 384Mi
+
+# Radarr - Movie management
+radarr:
+  enabled: true
+  image:
+    repository: lscr.io/linuxserver/radarr
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 7878
+    nodePort: 30083
+
+  env:
+    PUID: "1000"
+    PGID: "1000"
+    TZ: "America/Toronto"
+
+  persistence:
+    config:
+      enabled: true
+      size: 1Gi
+    media:
+      enabled: true
+      size: 50Gi
+    downloads:
+      enabled: true
+      size: 20Gi
+
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1Gi
+    requests:
+      cpu: 150m
+      memory: 384Mi
+
+# Bazarr - Subtitle management
+bazarr:
+  enabled: true
+  image:
+    repository: lscr.io/linuxserver/bazarr
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 6767
+    nodePort: 30084
+
+  env:
+    PUID: "1000"
+    PGID: "1000"
+    TZ: "America/Toronto"
+
+  persistence:
+    config:
+      enabled: true
+      size: 1Gi
+    media:
+      enabled: true
+      size: 50Gi
+
+  resources:
+    limits:
+      cpu: 600m
+      memory: 768Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# Jellyfin - Media server
+jellyfin:
+  enabled: true
+  image:
+    repository: lscr.io/linuxserver/jellyfin
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 8096
+    nodePort: 30085
+
+  env:
+    PUID: "1000"
+    PGID: "1000"
+    TZ: "America/Toronto"
+
+  persistence:
+    config:
+      enabled: true
+      size: 2Gi
+    media:
+      enabled: true
+      size: 50Gi
+    cache:
+      enabled: true
+      size: 5Gi
+
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 3Gi
+    requests:
+      cpu: 400m
+      memory: 1Gi

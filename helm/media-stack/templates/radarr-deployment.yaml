@@ -1,0 +1,57 @@
+{{- if .Values.radarr.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "media-stack.fullname" . }}-radarr
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: radarr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "media-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: radarr
+  template:
+    metadata:
+      labels:
+        {{- include "media-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: radarr
+    spec:
+      containers:
+      - name: radarr
+        image: "{{ .Values.radarr.image.repository }}:{{ .Values.radarr.image.tag }}"
+        imagePullPolicy: {{ .Values.radarr.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 7878
+          protocol: TCP
+        env:
+        - name: PUID
+          value: {{ .Values.radarr.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.radarr.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.radarr.env.TZ | quote }}
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: media
+          mountPath: /movies
+        - name: downloads
+          mountPath: /downloads
+        resources:
+          {{- toYaml .Values.radarr.resources | nindent 10 }}
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-radarr-config
+      - name: media
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-media
+      - name: downloads
+        persistentVolumeClaim:
+          claimName: {{ include "media-stack.fullname" . }}-downloads
+{{- end }}

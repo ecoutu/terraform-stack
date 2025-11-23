@@ -4,10 +4,13 @@ go = "latest"
 golangci-lint = "latest"
 helm = "latest"
 kubectl = "latest"
+minikube = "latest"
 packer = "latest"
 pre-commit = "latest"
 terraform = "latest"
+terraform-docs = "latest"
 tflint = "latest"
 
 [env]
 PAGER="cat"
+SOCKS_PROXY_PORT="1080"

@@ -1,0 +1,137 @@
+{{- if .Values.persistence.enabled }}
+# Shared media PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "media-stack.fullname" . }}-media
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.media.size }}
+---
+# Shared downloads PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "media-stack.fullname" . }}-downloads
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.downloads.size }}
+---
+# SABnzbd config PVC
+{{- if .Values.sabnzbd.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "media-stack.fullname" . }}-sabnzbd-config
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sabnzbd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.sabnzbd.persistence.config.size }}
+---
+{{- end }}
+# Sonarr config PVC
+{{- if .Values.sonarr.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "media-stack.fullname" . }}-sonarr-config
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sonarr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.sonarr.persistence.config.size }}
+---
+{{- end }}
+# Radarr config PVC
+{{- if .Values.radarr.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "media-stack.fullname" . }}-radarr-config
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: radarr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.radarr.persistence.config.size }}
+---
+{{- end }}
+# Bazarr config PVC
+{{- if .Values.bazarr.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "media-stack.fullname" . }}-bazarr-config
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bazarr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.bazarr.persistence.config.size }}
+---
+{{- end }}
+# Jellyfin config PVC
+{{- if .Values.jellyfin.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "media-stack.fullname" . }}-jellyfin-config
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: jellyfin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.jellyfin.persistence.config.size }}
+---
+# Jellyfin cache PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "media-stack.fullname" . }}-jellyfin-cache
+  labels:
+    {{- include "media-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: jellyfin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.jellyfin.persistence.cache.size }}
+{{- end }}
+{{- end }}

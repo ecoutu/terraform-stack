@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
-# SSH into the Minikube EC2 instance with port forwarding
+# SSH into the Minikube EC2 instance with SOCKS proxy for kubectl access
 #
 # Usage:
-#   ./scripts/ssh-minikube.sh                    # SSH with default port forwarding
-#   ./scripts/ssh-minikube.sh --no-forward       # SSH without port forwarding
+#   ./scripts/ssh-minikube.sh                    # SSH with SOCKS proxy
+#   ./scripts/ssh-minikube.sh --no-proxy         # SSH without SOCKS proxy
 #   ./scripts/ssh-minikube.sh --custom-ports     # SSH with custom port forwarding
 #   ./scripts/ssh-minikube.sh --help             # Show help
 
@@ -20,16 +20,18 @@ NC='\033[0m' # No Color
 # Default configuration
 SSH_KEY=""
 SSH_USER="ecoutu"
-FORWARD_PORTS=true
+ENABLE_SOCKS_PROXY=true
+SOCKS_PORT="${SOCKS_PROXY_PORT:-1080}"
 
 # Default ports to forward
 # Format: local_port:remote_port
 declare -a DEFAULT_PORTS=(
-    "8443:8443"   # Kubernetes API Server (minikube default)
-    "30080:30080" # NodePort for sample-app
-    "30000:30000" # NodePort range start
-    "32767:32767" # NodePort range end
+    "8443:8443"   # Minikube API Server
 )
+
+# Additional ports to forward (optional)
+# Format: local_port:remote_port
+declare -a ADDITIONAL_PORTS=()
 
 # Function to print colored messages
 print_info() {
@@ -51,49 +53,63 @@ print_error() {
 # Function to show usage
 show_help() {
     cat << EOF
-${GREEN}Minikube SSH Script${NC}
+${GREEN}Minikube SSH Script with SOCKS Proxy${NC}
 
-SSH into the Minikube EC2 instance with automatic port forwarding for Kubernetes services.
+SSH into the Minikube EC2 instance with SOCKS proxy for remote kubectl management.
 
 ${YELLOW}Usage:${NC}
     $0 [OPTIONS]
 
 ${YELLOW}Options:${NC}
-    --no-forward        SSH without port forwarding
-    --custom-ports      Prompt for custom port forwarding configuration
+    --no-proxy          SSH without SOCKS proxy
+    --socks-port PORT   SOCKS proxy port (default: 1080)
+    --custom-ports      Prompt for additional port forwarding
     --key PATH          Path to SSH private key (optional, uses default SSH config if not specified)
     --user USER         SSH user (default: ecoutu)
     --help              Show this help message
 
-${YELLOW}Default Port Forwarding:${NC}
-    8443:8443          Kubernetes API Server (minikube)
-    30080:30080        Sample app NodePort service
-    30000:30000        NodePort range start
-    32767:32767        NodePort range end
+${YELLOW}Default Configuration:${NC}
+    SOCKS Proxy:       localhost:1080
+    API Server:        localhost:8443 → minikube:8443
 
 ${YELLOW}Examples:${NC}
-    # SSH with default port forwarding
+    # SSH with SOCKS proxy on default port
     $0
 
-    # SSH without any port forwarding
-    $0 --no-forward
+    # SSH without SOCKS proxy
+    $0 --no-proxy
+
+    # SSH with custom SOCKS port
+    $0 --socks-port 9999
 
     # SSH with custom SSH key
     $0 --key ~/.ssh/minikube_rsa
 
-    # SSH with custom ports
+    # SSH with additional port forwarding
     $0 --custom-ports
 
-${YELLOW}After connecting:${NC}
-    # Check minikube status
-    minikube status
+${YELLOW}Using kubectl with port forwarding:${NC}
+    # Configure kubectl to use the forwarded API server
+    kubectl config set-cluster minikube-remote \\
+        --server=https://localhost:8443 \\
+        --insecure-skip-tls-verify=true
 
-    # Access Kubernetes cluster
+    # Or use SOCKS proxy for all traffic
+    export HTTPS_PROXY=socks5://localhost:1080
+
+    # Then use kubectl normally
     kubectl get nodes
     kubectl get pods -A
 
-    # Access the sample app locally (if port forwarding enabled)
-    # Open http://localhost:30080 in your browser
+${YELLOW}After connecting:${NC}
+    # Check minikube status on remote instance
+    minikube status
+
+    # Get minikube IP for kubectl configuration
+    minikube ip
+
+    # Access Kubernetes cluster through SOCKS proxy
+    # Set HTTPS_PROXY=socks5://localhost:1080 in your local terminal
 
 EOF
 }
@@ -112,23 +128,23 @@ get_instance_ip() {
     echo "$ip"
 }
 
-# Function to build SSH port forwarding arguments
-build_port_forward_args() {
+# Function to build SSH SOCKS proxy arguments
+build_socks_proxy_args() {
     local args=""
-    for port in "${DEFAULT_PORTS[@]}"; do
-        args="$args -L ${port}"
-    done
+    if [[ "$ENABLE_SOCKS_PROXY" == true ]]; then
+        args="-D ${SOCKS_PORT}"
+    fi
     echo "$args"
 }
 
 # Function to get custom ports from user
 get_custom_ports() {
-    print_info "Enter custom ports to forward (format: local:remote)"
+    print_info "Enter additional ports to forward (format: local:remote)"
     print_info "Press Enter with empty input to finish"
 
     local custom_ports=()
     while true; do
-        read -p "Port mapping (e.g., 8080:80): " port_mapping
+        read -p "Port mapping (e.g., 30080:30080): " port_mapping
         if [[ -z "$port_mapping" ]]; then
             break
         fi
@@ -142,11 +158,11 @@ get_custom_ports() {
     done
 
     if [[ ${#custom_ports[@]} -eq 0 ]]; then
-        print_warning "No ports specified, using defaults"
+        print_info "No additional ports specified"
         echo ""
     else
-        # Replace default ports with custom ports
-        DEFAULT_PORTS=("${custom_ports[@]}")
+        # Add custom ports to additional ports
+        ADDITIONAL_PORTS=("${custom_ports[@]}")
         echo ""
     fi
 }
@@ -154,9 +170,13 @@ get_custom_ports() {
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --no-forward)
-            FORWARD_PORTS=false
+        --no-proxy)
+            ENABLE_SOCKS_PROXY=false
             shift
+            ;;
+        --socks-port)
+            SOCKS_PORT="$2"
+            shift 2
             ;;
         --custom-ports)
             get_custom_ports
@@ -210,21 +230,36 @@ main() {
     fi
     echo ""
 
-    if [[ "$FORWARD_PORTS" == true ]]; then
-        print_info "Port forwarding enabled:"
-        for port in "${DEFAULT_PORTS[@]}"; do
+    # Add default port forwarding for API server
+    print_info "Default port forwarding:"
+    for port in "${DEFAULT_PORTS[@]}"; do
+        local local_port="${port%%:*}"
+        local remote_port="${port##*:}"
+        echo "  localhost:${local_port} → minikube:${remote_port}"
+        ssh_cmd="$ssh_cmd -L ${local_port}:192.168.49.2:${remote_port}"
+    done
+    echo ""
+
+    # Add SOCKS proxy
+    if [[ "$ENABLE_SOCKS_PROXY" == true ]]; then
+        ssh_cmd="$ssh_cmd -D ${SOCKS_PORT}"
+        print_info "SOCKS proxy enabled:"
+        echo "  SOCKS5 proxy: localhost:${SOCKS_PORT}"
+        echo ""
+    else
+        print_info "SOCKS proxy disabled"
+        echo ""
+    fi
+
+    # Add additional port forwarding if specified
+    if [[ ${#ADDITIONAL_PORTS[@]} -gt 0 ]]; then
+        print_info "Additional port forwarding:"
+        for port in "${ADDITIONAL_PORTS[@]}"; do
             local local_port="${port%%:*}"
             local remote_port="${port##*:}"
             echo "  localhost:${local_port} → minikube:${remote_port}"
-            ssh_cmd="$ssh_cmd -L ${local_port}:localhost:${remote_port}"
+            ssh_cmd="$ssh_cmd -L ${local_port}:192.168.49.2:${remote_port}"
         done
-        echo ""
-        print_info "After connecting, you can access services at:"
-        print_info "  - Kubernetes API: https://localhost:8443"
-        print_info "  - Sample App: http://localhost:30080"
-        echo ""
-    else
-        print_info "Port forwarding disabled"
         echo ""
     fi
 
@@ -235,7 +270,7 @@ main() {
     echo ""
 
     # Execute SSH connection
-    $ssh_cmd "${SSH_USER}@${INSTANCE_IP}"
+    $ssh_cmd -o EnableEscapeCommandline=yes "${SSH_USER}@${INSTANCE_IP}"
 
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
