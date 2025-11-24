@@ -270,7 +270,7 @@ main() {
     echo ""
 
     # Execute SSH connection
-    $ssh_cmd -o EnableEscapeCommandline=yes "${SSH_USER}@${INSTANCE_IP}"
+    $ssh_cmd "${SSH_USER}@${INSTANCE_IP}"
 
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
