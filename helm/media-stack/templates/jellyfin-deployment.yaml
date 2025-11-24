@@ -37,14 +37,14 @@ spec:
           protocol: TCP
         readinessProbe:
           httpGet:
-            path: /
+            path: /health
             port: 8096
           initialDelaySeconds: 30
           periodSeconds: 10
           failureThreshold: 6
         livenessProbe:
           httpGet:
-            path: /
+            path: /health
             port: 8096
           initialDelaySeconds: 60
           periodSeconds: 20

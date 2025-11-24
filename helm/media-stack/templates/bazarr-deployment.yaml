@@ -37,18 +37,18 @@ spec:
           protocol: TCP
         readinessProbe:
           httpGet:
-            path: /health
+            path: /
             port: 6767
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
           periodSeconds: 10
-          failureThreshold: 3
+          failureThreshold: 6
         livenessProbe:
           httpGet:
-            path: /health
+            path: /
             port: 6767
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          failureThreshold: 3
+          initialDelaySeconds: 90
+          periodSeconds: 20
+          failureThreshold: 6
         env:
         - name: PUID
           value: {{ .Values.bazarr.env.PUID | quote }}
