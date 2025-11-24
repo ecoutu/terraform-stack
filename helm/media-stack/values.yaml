@@ -53,8 +53,8 @@ persistence:
 sabnzbd:
   enabled: true
   image:
-    repository: lscr.io/linuxserver/sabnzbd
-    tag: 4.2.0
+    repository: linuxserver/sabnzbd
+    tag: latest
     pullPolicy: IfNotPresent
 
   service:
@@ -87,8 +87,8 @@ sabnzbd:
 sonarr:
   enabled: true
   image:
-    repository: lscr.io/linuxserver/sonarr
-    tag: 4.0.0
+    repository: ghcr.io/linuxserver/sonarr
+    tag: latest
     pullPolicy: IfNotPresent
 
   service:
@@ -125,7 +125,7 @@ radarr:
   enabled: true
   image:
     repository: lscr.io/linuxserver/radarr
-    tag: 5.2.0
+    tag: latest
     pullPolicy: IfNotPresent
 
   service:
@@ -161,8 +161,8 @@ radarr:
 bazarr:
   enabled: true
   image:
-    repository: lscr.io/linuxserver/bazarr
-    tag: 23.12.2
+    repository: linuxserver/bazarr
+    tag: latest
     pullPolicy: IfNotPresent
 
   service:
@@ -195,8 +195,8 @@ bazarr:
 jellyfin:
   enabled: true
   image:
-    repository: lscr.io/linuxserver/jellyfin
-    tag: 10.8.10
+    repository: jellyfin/jellyfin
+    tag: latest
     pullPolicy: IfNotPresent
 
   service:
