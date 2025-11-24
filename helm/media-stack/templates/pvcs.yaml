@@ -1,5 +1,5 @@
 {{- if .Values.persistence.enabled }}
-# Shared media PVC
+# Shared media PVC (used by: sonarr, radarr, bazarr, jellyfin)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -8,13 +8,13 @@ metadata:
     {{- include "media-stack.labels" . | nindent 4 }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - {{ .Values.persistence.sharedAccessMode }}
   storageClassName: {{ .Values.global.storageClass }}
   resources:
     requests:
       storage: {{ .Values.persistence.media.size }}
 ---
-# Shared downloads PVC
+# Shared downloads PVC (used by: sabnzbd, sonarr, radarr)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -23,7 +23,7 @@ metadata:
     {{- include "media-stack.labels" . | nindent 4 }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - {{ .Values.persistence.sharedAccessMode }}
   storageClassName: {{ .Values.global.storageClass }}
   resources:
     requests:

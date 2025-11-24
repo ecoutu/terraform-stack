@@ -15,6 +15,20 @@ A complete media automation and streaming stack for Minikube, including:
 - Minikube with sufficient resources
 - At least 80Gi of available storage
 
+### ⚠️ Important: Storage Access Mode
+
+This chart uses **shared persistent volumes** that are mounted by multiple pods:
+
+- **Media PVC**: Shared by sonarr, radarr, bazarr, and jellyfin
+- **Downloads PVC**: Shared by sabnzbd, sonarr, and radarr
+
+By default, these volumes use `ReadWriteOnce` access mode, which **only works on single-node clusters** like Minikube or microk8s. In multi-node clusters, pods may be scheduled on different nodes and fail to mount the volumes.
+
+**For multi-node clusters**, you must:
+
+1. Use a storage class that supports `ReadWriteMany` (NFS, CephFS, GlusterFS, etc.)
+2. Set `persistence.sharedAccessMode: ReadWriteMany` in your values.yaml
+
 ## Installation
 
 ### Quick Start
@@ -73,6 +87,24 @@ persistence:
     size: 100Gi
   downloads:
     size: 50Gi
+```
+
+#### Access Modes
+
+**Single-node clusters (default - Minikube, microk8s)**:
+
+```yaml
+persistence:
+  sharedAccessMode: ReadWriteOnce
+```
+
+**Multi-node clusters (requires ReadWriteMany-capable storage)**:
+
+```yaml
+persistence:
+  sharedAccessMode: ReadWriteMany
+global:
+  storageClass: "nfs-client" # or cephfs, glusterfs, etc.
 ```
 
 ### Resources

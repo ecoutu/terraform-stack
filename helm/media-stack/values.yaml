@@ -28,6 +28,10 @@ metricsServer:
 # Persistent storage configuration
 persistence:
   enabled: true
+  # Access mode for shared volumes (media and downloads)
+  # ReadWriteOnce: Only works on single-node clusters (Minikube, microk8s)
+  # ReadWriteMany: Required for multi-node clusters (requires NFS, CephFS, or similar)
+  sharedAccessMode: ReadWriteOnce
   config:
     size: 5Gi
   media:
