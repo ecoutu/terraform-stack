@@ -168,7 +168,7 @@ spec:
           periodSeconds: 10
           failureThreshold: 3
         resources:
-          {{- toYaml .Values.metricsServer.resources | nindent 10 }}
+          {{- toYaml (default .Values.global.resources .Values.metricsServer.resources) | nindent 10 }}
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

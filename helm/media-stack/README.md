@@ -75,8 +75,8 @@ minikube service media-stack-jellyfin
 
 The chart creates shared persistent volumes for:
 
-- **Media**: 50Gi (shared by all applications)
-- **Downloads**: 20Gi (shared download folder)
+- **Media**: 50Gi (shared by sonarr, radarr, bazarr, jellyfin)
+- **Downloads**: 20Gi (shared by sabnzbd, sonarr, radarr)
 - **Config**: Individual volumes for each application (1-2Gi each)
 
 Adjust storage sizes in `values.yaml`:
@@ -111,9 +111,10 @@ global:
 
 Default resource limits per application:
 
-- SABnzbd: 1 CPU, 1Gi RAM
-- Sonarr/Radarr/Bazarr: 500m CPU, 512Mi RAM
-- Jellyfin: 2 CPU, 2Gi RAM
+- SABnzbd: 1.5 CPU, 2Gi RAM
+- Sonarr/Radarr: 800m CPU, 1Gi RAM
+- Bazarr: 600m CPU, 768Mi RAM
+- Jellyfin: 2 CPU, 3Gi RAM
 
 Adjust in `values.yaml`:
 

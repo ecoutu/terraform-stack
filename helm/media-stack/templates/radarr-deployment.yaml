@@ -58,7 +58,7 @@ spec:
         - name: downloads
           mountPath: /downloads
         resources:
-          {{- toYaml .Values.radarr.resources | nindent 10 }}
+          {{- toYaml (default .Values.global.resources .Values.radarr.resources) | nindent 10 }}
       volumes:
       - name: config
         persistentVolumeClaim:

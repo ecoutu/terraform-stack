@@ -59,7 +59,7 @@ spec:
           mountPath: /movies
           subPath: movies
         resources:
-          {{- toYaml .Values.bazarr.resources | nindent 10 }}
+          {{- toYaml (default .Values.global.resources .Values.bazarr.resources) | nindent 10 }}
       volumes:
       - name: config
         persistentVolumeClaim:

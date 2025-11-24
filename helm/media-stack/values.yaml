@@ -3,6 +3,16 @@ global:
   storageClass: "standard"
   timezone: "America/Toronto"
 
+  # Default resource limits for all applications
+  # Individual services can override these values
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
 # Metrics Server - Resource monitoring
 metricsServer:
   enabled: true
@@ -38,15 +48,6 @@ persistence:
     size: 50Gi
   downloads:
     size: 20Gi
-
-# Resource limits
-resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
-  requests:
-    cpu: 250m
-    memory: 256Mi
 
 # SABnzbd - Usenet downloader
 sabnzbd:
