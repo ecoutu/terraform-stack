@@ -7,15 +7,17 @@ global:
   # Individual services can override these values
   resources:
     limits:
-      cpu: 1000m
-      memory: 1Gi
+      cpu: 2000m
+      memory: 2Gi
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 250m
+      memory: 512Mi
 
 # Metrics Server - Resource monitoring
+# Note: Disabled by default since metrics-server is typically pre-installed in minikube
+# and should be managed separately at the cluster level, not as part of this stack
 metricsServer:
-  enabled: true
+  enabled: false
   image:
     repository: registry.k8s.io/metrics-server/metrics-server
     tag: v0.7.2
@@ -29,11 +31,11 @@ metricsServer:
 
   resources:
     requests:
-      cpu: 100m
-      memory: 200Mi
+      cpu: 150m
+      memory: 256Mi
     limits:
-      cpu: 200m
-      memory: 400Mi
+      cpu: 300m
+      memory: 512Mi
 
 # Persistent storage configuration
 persistence:
@@ -77,10 +79,10 @@ sabnzbd:
 
   resources:
     limits:
-      cpu: 1500m
+      cpu: 2000m
       memory: 2Gi
     requests:
-      cpu: 300m
+      cpu: 500m
       memory: 512Mi
 
 # Sonarr - TV show management
@@ -114,11 +116,11 @@ sonarr:
 
   resources:
     limits:
-      cpu: 800m
+      cpu: 1000m
       memory: 1Gi
     requests:
-      cpu: 150m
-      memory: 384Mi
+      cpu: 250m
+      memory: 512Mi
 
 # Radarr - Movie management
 radarr:
@@ -151,11 +153,11 @@ radarr:
 
   resources:
     limits:
-      cpu: 800m
+      cpu: 1000m
       memory: 1Gi
     requests:
-      cpu: 150m
-      memory: 384Mi
+      cpu: 250m
+      memory: 512Mi
 
 # Bazarr - Subtitle management
 bazarr:
@@ -185,11 +187,11 @@ bazarr:
 
   resources:
     limits:
-      cpu: 600m
-      memory: 768Mi
+      cpu: 1000m
+      memory: 1Gi
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 200m
+      memory: 512Mi
 
 # Jellyfin - Media server
 jellyfin:
@@ -222,8 +224,8 @@ jellyfin:
 
   resources:
     limits:
-      cpu: 2000m
-      memory: 3Gi
+      cpu: 4000m
+      memory: 4Gi
     requests:
-      cpu: 400m
+      cpu: 1000m
       memory: 1Gi
