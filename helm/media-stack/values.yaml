@@ -109,10 +109,8 @@ sonarr:
       size: 1Gi
     media:
       enabled: true
-      size: 50Gi
     downloads:
       enabled: true
-      size: 20Gi
 
   resources:
     limits:
@@ -146,10 +144,8 @@ radarr:
       size: 1Gi
     media:
       enabled: true
-      size: 50Gi
     downloads:
       enabled: true
-      size: 20Gi
 
   resources:
     limits:
@@ -183,7 +179,6 @@ bazarr:
       size: 1Gi
     media:
       enabled: true
-      size: 50Gi
 
   resources:
     limits:
@@ -217,7 +212,6 @@ jellyfin:
       size: 2Gi
     media:
       enabled: true
-      size: 50Gi
     cache:
       enabled: true
       size: 5Gi
