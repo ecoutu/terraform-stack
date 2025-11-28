@@ -10,13 +10,6 @@ resource "aws_iam_role" "this" {
   max_session_duration  = var.max_session_duration
   force_detach_policies = var.force_detach_policies
 
-  dynamic "inline_policy" {
-    for_each = var.inline_policies
-    content {
-      name   = inline_policy.value.name
-      policy = inline_policy.value.policy
-    }
-  }
 
   tags = merge(
     var.tags,
@@ -24,6 +17,15 @@ resource "aws_iam_role" "this" {
       Name = var.role_name
     }
   )
+}
+
+# Inline policies (use aws_iam_role_policy instead of deprecated inline_policy block)
+resource "aws_iam_role_policy" "inline" {
+  for_each = { for p in var.inline_policies : p.name => p }
+
+  name   = each.value.name
+  role   = aws_iam_role.this.id
+  policy = each.value.policy
 }
 
 # Assume Role Policy Document (if custom policy not provided)
