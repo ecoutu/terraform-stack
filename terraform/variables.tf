@@ -46,7 +46,7 @@ variable "github_org" {
 variable "github_repo" {
   description = "GitHub repository name"
   type        = string
-  default     = "terraform-stack"
+  default     = "kubernetes-stack"
 }
 
 variable "github_branches" {

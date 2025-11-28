@@ -11,7 +11,7 @@ This module creates an AWS IAM role that allows GitHub Actions to authenticate u
    - Configured with GitHub's thumbprints
 
 2. **IAM Role**: `GitHubActionsTerraformRole`
-   - Can only be assumed by workflows from `ecoutu/terraform-stack`
+   - Can only be assumed by workflows from `ecoutu/kubernetes-stack`
    - Restricted to `main` and `develop` branches
    - Includes permissions for Terraform operations (S3, DynamoDB, EC2, VPC, IAM, etc.)
    - Session duration: 1 hour
@@ -27,7 +27,7 @@ This module creates an AWS IAM role that allows GitHub Actions to authenticate u
 ### Step 1: Deploy the Infrastructure
 
 ```bash
-cd /home/ecoutu/ecoutu/src/terraform-stack
+cd /home/ecoutu/ecoutu/src/kubernetes-stack
 terraform init
 terraform apply
 ```
@@ -42,7 +42,7 @@ terraform output github_actions_role_arn
 
 Add it as a repository secret:
 
-1. Go to: https://github.com/ecoutu/terraform-stack/settings/secrets/actions
+1. Go to: https://github.com/ecoutu/kubernetes-stack/settings/secrets/actions
 2. Click "New repository secret"
 3. Name: `AWS_ROLE_TO_ASSUME`
 4. Value: (paste the role ARN from above)
@@ -53,7 +53,7 @@ Or use GitHub CLI:
 ```bash
 gh secret set AWS_ROLE_TO_ASSUME \
   --body "$(terraform output -raw github_actions_role_arn)" \
-  --repo ecoutu/terraform-stack
+  --repo ecoutu/kubernetes-stack
 ```
 
 ### Step 3: Use in GitHub Actions
@@ -79,7 +79,7 @@ steps:
 3. **Workflow** presents the token to AWS STS
 4. **AWS** validates the token against the OIDC provider
 5. **AWS** checks the trust policy conditions:
-   - ✅ Repository matches: `ecoutu/terraform-stack`
+   - ✅ Repository matches: `ecoutu/kubernetes-stack`
    - ✅ Branch is `main` or `develop`
 6. **AWS** issues temporary credentials (valid for 1 hour)
 7. **Workflow** uses credentials to run Terraform
@@ -101,7 +101,7 @@ Test the authentication:
 git push origin main
 
 # Watch it run
-# Visit: https://github.com/ecoutu/terraform-stack/actions
+# Visit: https://github.com/ecoutu/kubernetes-stack/actions
 
 # Check CloudTrail for OIDC events
 aws cloudtrail lookup-events \

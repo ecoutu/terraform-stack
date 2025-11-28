@@ -25,7 +25,7 @@ The Terraform state migration system has been moved from a single bash script to
 ## New Directory Structure
 
 ```
-terraform-stack/
+kubernetes-stack/
 ├── migrations/              # New migration system
 │   ├── main.go             # Migration tool implementation
 │   ├── go.mod              # Go dependencies

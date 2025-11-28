@@ -20,7 +20,7 @@ This creates:
 
 - GitHub OIDC provider in AWS
 - IAM role with Terraform permissions
-- Trust policy restricting to `ecoutu/terraform-stack` from `main`/`develop` branches
+- Trust policy restricting to `ecoutu/kubernetes-stack` from `main`/`develop` branches
 
 ### Step 2: Add GitHub Secret
 
@@ -37,12 +37,12 @@ Add to GitHub (choose one method):
 ```bash
 gh secret set AWS_ROLE_TO_ASSUME \
      --body "$(cd terraform && terraform output -raw github_actions_role_arn)" \
-  --repo ecoutu/terraform-stack
+  --repo ecoutu/kubernetes-stack
 ```
 
 **Method B - Web UI:**
 
-1. Go to: https://github.com/ecoutu/terraform-stack/settings/secrets/actions
+1. Go to: https://github.com/ecoutu/kubernetes-stack/settings/secrets/actions
 2. Click "New repository secret"
 3. Name: `AWS_ROLE_TO_ASSUME`
 4. Value: (paste the ARN)
@@ -58,7 +58,7 @@ git commit -m "Add OIDC authentication workflow"
 git push origin main
 ```
 
-Watch it run: https://github.com/ecoutu/terraform-stack/actions
+Watch it run: https://github.com/ecoutu/kubernetes-stack/actions
 
 ## How to Use in Your Workflows
 
@@ -112,7 +112,7 @@ cd terraform && terraform output
 **Error: "Not authorized to perform: sts:AssumeRoleWithWebIdentity"**
 
 - Ensure you're running from `main` or `develop` branch
-- Check repository name matches exactly: `ecoutu/terraform-stack`
+- Check repository name matches exactly: `ecoutu/kubernetes-stack`
 
 **Error: "Missing required permissions"**
 
@@ -121,7 +121,7 @@ cd terraform && terraform output
 
 **Secret not found**
 
-- Verify secret exists: `gh secret list -R ecoutu/terraform-stack`
+- Verify secret exists: `gh secret list -R ecoutu/kubernetes-stack`
 - Re-add using Step 2 above
 
 ## Next Steps
@@ -137,7 +137,7 @@ Customize in `terraform.tfvars`:
 
 ```hcl
 github_org      = "ecoutu"              # Your GitHub org
-github_repo     = "terraform-stack"     # Your repository name
+github_repo     = "kubernetes-stack"     # Your repository name
 github_branches = ["main", "develop"]   # Allowed branches
 ```
 

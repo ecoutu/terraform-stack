@@ -24,7 +24,7 @@ env:
   TF_VERSION: 1.13.5
   PKG_VERSION: 1.14.3
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/terraform-stack
+  IMAGE_NAME: ${{ github.repository }}/kubernetes-stack
 
 jobs:
   validate:

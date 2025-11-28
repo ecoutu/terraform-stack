@@ -19,7 +19,7 @@ module "github_secrets" {
   source = "./modules/github-secrets"
 
   github_token    = var.github_token
-  repository_name = "ecoutu/terraform-stack"
+  repository_name = "ecoutu/kubernetes-stack"
   aws_role_arn    = module.github_actions_role.role_arn
   aws_region      = "us-east-1"
 }
@@ -32,7 +32,7 @@ module "github_secrets" {
   source = "./modules/github-secrets"
 
   github_token    = var.github_token
-  repository_name = "ecoutu/terraform-stack"
+  repository_name = "ecoutu/kubernetes-stack"
   aws_role_arn    = module.github_actions_role.role_arn
   aws_region      = "us-east-1"
 
@@ -144,7 +144,7 @@ module "github_actions_role" {
 
   role_name       = "GitHubActionsTerraformRole"
   github_org      = "ecoutu"
-  github_repo     = "terraform-stack"
+  github_repo     = "kubernetes-stack"
   github_branches = ["main", "develop"]
 
   inline_policies = {
@@ -164,7 +164,7 @@ module "github_secrets" {
   source = "./modules/github-secrets"
 
   github_token    = var.github_token
-  repository_name = "ecoutu/terraform-stack"
+  repository_name = "ecoutu/kubernetes-stack"
   aws_role_arn    = module.github_actions_role.role_arn
   aws_region      = var.aws_region
 }
@@ -176,21 +176,21 @@ After applying, verify the secrets were created:
 
 ```bash
 # Using GitHub CLI
-gh secret list -R ecoutu/terraform-stack
+gh secret list -R ecoutu/kubernetes-stack
 
 # Expected output:
 # AWS_ROLE_TO_ASSUME  Updated YYYY-MM-DD
 
 # Check variables
-gh variable list -R ecoutu/terraform-stack
+gh variable list -R ecoutu/kubernetes-stack
 
 # Expected output:
 # AWS_REGION  us-east-1  Updated YYYY-MM-DD
 ```
 
 Or check in the GitHub UI:
-- Secrets: https://github.com/ecoutu/terraform-stack/settings/secrets/actions
-- Variables: https://github.com/ecoutu/terraform-stack/settings/variables/actions
+- Secrets: https://github.com/ecoutu/kubernetes-stack/settings/secrets/actions
+- Variables: https://github.com/ecoutu/kubernetes-stack/settings/variables/actions
 
 ## Workflow Usage
 
@@ -327,7 +327,7 @@ To remove secrets managed by this module:
 terraform apply
 
 # Or manually delete
-gh secret delete AWS_ROLE_TO_ASSUME -R ecoutu/terraform-stack
+gh secret delete AWS_ROLE_TO_ASSUME -R ecoutu/kubernetes-stack
 ```
 
 ## Advanced Usage
@@ -342,7 +342,7 @@ module "github_secrets" {
   count  = var.github_token != "" ? 1 : 0
 
   github_token    = var.github_token
-  repository_name = "ecoutu/terraform-stack"
+  repository_name = "ecoutu/kubernetes-stack"
   aws_role_arn    = module.github_actions_role.role_arn
   aws_region      = var.aws_region
 }
@@ -375,7 +375,7 @@ module "github_secrets_terraform" {
   source = "./modules/github-secrets"
 
   github_token    = var.github_token
-  repository_name = "ecoutu/terraform-stack"
+  repository_name = "ecoutu/kubernetes-stack"
   aws_role_arn    = module.github_actions_terraform_role.role_arn
   aws_region      = "us-east-1"
 }

@@ -16,7 +16,7 @@ Automatically sets these in your GitHub repository:
 1. Visit: https://github.com/settings/tokens?type=beta
 2. Click "Generate new token" (fine-grained)
 3. Configure:
-   - **Repository**: Select `ecoutu/terraform-stack`
+   - **Repository**: Select `ecoutu/kubernetes-stack`
    - **Permissions**:
      - Secrets: Read and write ✅
      - Variables: Read and write ✅
@@ -44,10 +44,10 @@ This will:
 
 ```bash
 # Check secrets were created
-gh secret list -R ecoutu/terraform-stack
+gh secret list -R ecoutu/kubernetes-stack
 
 # Check variables were created
-gh variable list -R ecoutu/terraform-stack
+gh variable list -R ecoutu/kubernetes-stack
 
 # View Terraform outputs
 cd terraform && terraform output github_secrets_configured
@@ -87,7 +87,7 @@ terraform output github_actions_role_arn
 # 2. Manually set in GitHub
 gh secret set AWS_ROLE_TO_ASSUME \
      --body "$(cd terraform && terraform output -raw github_actions_role_arn)" \
-  --repo ecoutu/terraform-stack
+  --repo ecoutu/kubernetes-stack
 ```
 
 ## Verification
@@ -126,8 +126,9 @@ Terraform will automatically update the secret in GitHub.
 ## Troubleshooting
 
 ### "404 Not Found"
-- Verify repository name: `ecoutu/terraform-stack`
-- Check token has access to the repository
+- Verify repository name: `ecoutu/kubernetes-stack`
+# Check token has access to the repository
+
 
 ### "403 Forbidden"
 - Token needs "Secrets: Read and write" permission

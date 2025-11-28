@@ -340,7 +340,7 @@ Clear the plugin cache if you encounter issues:
 
 ```bash
 docker compose down -v
-docker volume rm terraform-stack_terraform-plugins
+docker volume rm kubernetes-stack_terraform-plugins
 make docker-build
 ```
 

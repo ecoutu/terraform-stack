@@ -15,7 +15,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "ecoutu-terraform-stack-state"
+    bucket       = "ecoutu-kubernetes-stack-state"
     key          = "terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true

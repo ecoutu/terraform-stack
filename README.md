@@ -1,62 +1,67 @@
-# Terraform Infrastructure Stack
+# Kubernetes Infrastructure
 
-AWS infrastructure with VPC, IAM, and CI/CD using modular Terraform and GitHub Actions.
+This repository provides a complete, production-ready infrastructure stack for self-hosting media services (such as Jellyfin, Sonarr, Radarr, Bazarr, SABnzbd, etc.) on AWS and Kubernetes. It leverages modular Terraform for AWS provisioning, Helm charts for Kubernetes deployments, and robust CI/CD with GitHub Actions.
+
+**Key Features:**
+
+- Modular AWS infrastructure (VPC, IAM, Route53, S3, EC2, etc.)
+- Kubernetes-ready: Helm charts for media services
+- Secure GitHub OIDC authentication and secrets management
+- Automated state migrations (Go-based)
+- Containerized development and deployment (Docker)
+- Pre-commit hooks and CI/CD for code quality
 
 ## Prerequisites
 
 - Terraform >= 1.13.5
-- AWS CLI configured
+- AWS CLI configured and authenticated
 - GitHub repository with Actions enabled
-- **Optional**: Docker for containerized development
-- **Optional**: pre-commit for automated code quality checks (recommended)
+- Docker (optional, for containerized workflows)
+- pre-commit (optional, for code quality)
 
-## Features
+## Stack Overview
 
-- Modular architecture with reusable components
-- VPC with public/private subnets across AZs
-- IAM users, roles, and GitHub OIDC authentication
-- State management with S3 backend
-- Go-based state migration system
-- GitHub Actions CI/CD with plan/apply workflow
+**Infrastructure:**
 
-## Usage
+- AWS: VPC, subnets, IAM, Route53, S3, EC2, and more (via Terraform modules)
+- Kubernetes: Helm charts for media services (see `helm/media-stack`)
+- State: S3 backend for Terraform state, Go-based migration system
 
-### Native Installation
+**DevOps:**
 
-1. Copy the example variables file:
+- GitHub Actions for CI/CD (plan, apply, OIDC auth)
+- Pre-commit hooks for Terraform, YAML, and Go code
+- Docker-based workflows for local development
 
-   ```bash
-   cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-   ```
+## Quick Start
 
-2. Edit `terraform/terraform.tfvars` with your desired values
+### 1. Configure Variables
 
-3. Initialize Terraform:
+```bash
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+# Edit terraform/terraform.tfvars with your values
+```
 
-   ```bash
-   cd terraform && terraform init
-   ```
+### 2. Initialize & Deploy
 
-4. Review the planned changes:
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
 
-   ```bash
-   cd terraform && terraform plan
-   ```
+### 3. (Optional) Use Docker
 
-5. Apply the configuration:
+```bash
+# Build and enter a container shell
+make docker-build
+make docker-shell
+# Or run Terraform directly
+make docker-terraform CMD="plan"
+```
 
-   ```bash
-   cd terraform && terraform apply
-   ```
-
-6. Destroy resources when needed:
-   ```bash
-   terraform destroy
-   ```
-
-### Docker Usage
-
-Run Terraform in a containerized environment:
+See [DOCKER.md](DOCKER.md) for full Docker usage.
 
 ```bash
 # Build Docker images
@@ -76,168 +81,73 @@ make docker-migrate CMD="status"
 
 See [DOCKER.md](DOCKER.md) for complete Docker documentation.
 
-## Key Variables
+## Configuration
 
-| Name                   | Description         | Default         |
-| ---------------------- | ------------------- | --------------- |
-| aws_region             | AWS region          | us-east-1       |
-| environment            | Environment name    | dev             |
-| vpc_cidr               | VPC CIDR block      | 10.0.0.0/16     |
-| az_count               | Number of AZs       | 2               |
-| github_org             | GitHub organization | ecoutu          |
-| github_repo            | GitHub repository   | terraform-stack |
-| terraform_state_bucket | S3 bucket for state | ""              |
+Key variables (see `terraform/variables.tf` for all options):
 
-See [terraform/variables.tf](terraform/variables.tf) for complete list.
+| Name                   | Description         | Default     |
+| ---------------------- | ------------------- | ----------- |
+| aws_region             | AWS region          | us-east-1   |
+| environment            | Environment name    | dev         |
+| vpc_cidr               | VPC CIDR block      | 10.0.0.0/16 |
+| az_count               | Number of AZs       | 2           |
+| github_org             | GitHub organization | ecoutu      |
+| github_repo            | GitHub repository   | media-stack |
+| terraform_state_bucket | S3 bucket for state | ""          |
 
 ## Outputs
 
-Key outputs include:
+Provisioning outputs include:
 
-- VPC ID, subnet IDs, and NAT Gateway IPs
-- IAM user ARN, access keys, and admin role
-- GitHub Actions role ARN and OIDC provider
-- Terraform state bucket and lock table
+- VPC/subnet IDs, NAT Gateway IPs
+- IAM user/role ARNs, GitHub OIDC role
+- Terraform state bucket/lock table
 
-See [terraform/outputs.tf](terraform/outputs.tf) for complete list.
+See [`terraform/outputs.tf`](terraform/outputs.tf) for details.
 
 ## State Migrations
 
-This project includes a Go-based migration system for managing Terraform state changes, similar to database migrations.
+This project includes a Go-based migration system for safe, versioned changes to Terraform state (move, import, refactor, etc.).
 
-### Quick Start
+**Quick usage:**
 
 ```bash
-# Check migration status
-./migrate.sh status
-
-# Apply all pending migrations
-./migrate.sh up
-
-# Rollback last migration
-./migrate.sh down
-
-# Create new migration
+./migrate.sh status   # Check migration status
+./migrate.sh up       # Apply all pending migrations
+./migrate.sh down     # Rollback last migration
 ./migrate.sh create my_migration_name
 ```
 
-See [migrations/README.md](migrations/README.md) for complete documentation.
+See [`migrations/README.md`](migrations/README.md) for full docs.
 
-### Using Make
+## Development & Quality
 
-```bash
-# Show available commands
-make help
+### Pre-commit Hooks
 
-# Check migration status
-make migrate-status
+Automated checks for Terraform, YAML, and Go code. Enforces conventional commit messages.
 
-# Apply migrations
-make migrate-up
-
-# Create new migration
-make migrate-create NAME=my_migration
-```
-
-### When to Use Migrations
-
-Use migrations when you need to:
-
-- Move resources between modules
-- Rename resources without destroying them
-- Import existing AWS resources
-- Remove resources from state management
-- Refactor module structure
-
-### Learn More
-
-- [migrations/README.md](migrations/README.md) - Complete migration system documentation
-- [migrations/MIGRATION-SYSTEM.md](migrations/MIGRATION-SYSTEM.md) - Migration system overview and comparison
-- [STATE-MIGRATION.md](STATE-MIGRATION.md) - Migration guide
-
-## Git Hooks
-
-This project uses pre-commit hooks to enforce code quality and commit message standards before code enters the repository.
-
-### Setup
-
-1. Install pre-commit:
-
-   ```bash
-   pip install pre-commit
-   # or
-   brew install pre-commit
-   ```
-
-2. Install the git hooks:
-   ```bash
-   make pre-commit-install
-   ```
-
-### What Gets Checked
-
-When you commit code, the following checks run automatically:
-
-**Pre-commit checks:**
-
-- Terraform formatting (`terraform fmt`)
-- Terraform validation (`terraform validate`)
-- Terraform documentation generation
-- Terraform linting with tflint
-- YAML syntax validation
-- Trailing whitespace removal
-- End-of-file fixes
-- Large file detection
-- Go code linting (for migrations) (**temporarily disabled due to Go version compatibility issues**)
-
-**Commit message checks:**
-
-- Enforces conventional commit format
-- Valid prefixes: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `perf:`, `test:`, `build:`, `ci:`, `chore:`, `revert:`
-
-### Example Commit Messages
-
-✅ Good:
-
-```
-feat: add VPC peering module
-fix: correct IAM policy for S3 access
-docs: update README with new module
-refactor: reorganize terraform module structure
-```
-
-❌ Bad:
-
-```
-added new feature
-Fixed bug
-updated documentation
-```
-
-### Bypassing Hooks
-
-Sometimes you need to bypass hooks (use sparingly):
+**Setup:**
 
 ```bash
-# Skip pre-commit hooks
+pip install pre-commit  # or: brew install pre-commit
+make pre-commit-install
+```
+
+**Checks:**
+
+- Terraform fmt/validate/lint/docs
+- YAML syntax
+- Go lint (for migrations)
+- Commit message style
+
+**Bypass:**
+
+```bash
 git commit --no-verify
-
-# Skip specific hooks
-SKIP=terraform_validate git commit -m "feat: work in progress"
+SKIP=terraform_validate git commit -m "feat: wip"
 ```
 
-### Maintenance
-
-```bash
-# Update hooks to latest versions
-make pre-commit-update
-
-# Run hooks manually on all files
-make pre-commit-run
-
-# Uninstall hooks
-make pre-commit-uninstall
-```
+See [`GIT-HOOKS.md`](GIT-HOOKS.md) for details.
 
 ### Troubleshooting
 
@@ -258,22 +168,21 @@ make pre-commit-uninstall
 
 ## CI/CD Pipeline
 
-GitHub Actions workflow with:
+GitHub Actions automate validation, planning, and deployment. OIDC authentication means no long-lived AWS credentials are required.
 
-- Validation and format checking
-- Terraform plan on pull requests
-- Manual approval for production apply
-- OIDC authentication (no stored credentials)
+See [OIDC-SETUP.md](OIDC-SETUP.md) and `.github/workflows/terraform.yml`.
 
-See [.github/workflows/terraform.yml](.github/workflows/terraform.yml) and [OIDC-SETUP.md](OIDC-SETUP.md).
+## Documentation & References
 
-## Documentation
+- [QUICK-REFERENCE.md](QUICK-REFERENCE.md) – Common commands
+- [DOCKER.md](DOCKER.md) – Docker usage
+- [GIT-HOOKS.md](GIT-HOOKS.md) – Git hooks and pre-commit
+- [PASSWORD-SETUP.md](PASSWORD-SETUP.md) – IAM password setup
+- [OIDC-SETUP.md](OIDC-SETUP.md) – GitHub OIDC setup
+- [GITHUB-SECRETS-SETUP.md](GITHUB-SECRETS-SETUP.md) – Secrets configuration
+- [STATE-MIGRATION.md](STATE-MIGRATION.md) – State migrations
+- [migrations/README.md](migrations/README.md) – Migration system
 
-- [QUICK-REFERENCE.md](QUICK-REFERENCE.md) - Common commands
-- [DOCKER.md](DOCKER.md) - Docker usage
-- [GIT-HOOKS.md](GIT-HOOKS.md) - Git hooks and pre-commit setup
-- [PASSWORD-SETUP.md](PASSWORD-SETUP.md) - IAM password setup
-- [OIDC-SETUP.md](OIDC-SETUP.md) - GitHub OIDC setup
-- [GITHUB-SECRETS-SETUP.md](GITHUB-SECRETS-SETUP.md) - Secrets configuration
-- [STATE-MIGRATION.md](STATE-MIGRATION.md) - State migrations
-- [migrations/README.md](migrations/README.md) - Migration system
+---
+
+**This project is maintained by [ecoutu](https://github.com/ecoutu). Contributions welcome!**

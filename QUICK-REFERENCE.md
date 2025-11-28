@@ -59,7 +59,7 @@ make docker-clean                 # Remove all Docker resources
 ## File Structure
 
 ```
-terraform-stack/
+kubernetes-stack/
 ├── terraform/                    # Terraform configuration directory
 │   ├── main.tf                   # Root Terraform config
 │   ├── variables.tf              # Input variables

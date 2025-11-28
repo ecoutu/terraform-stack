@@ -5,7 +5,7 @@ Thank you for your interest in contributing! This document provides guidelines f
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/terraform-stack.git`
+2. Clone your fork: `git clone https://github.com/your-username/kubernetes-stack.git`
 3. Create a feature branch: `git checkout -b feature/your-feature-name`
 4. Make your changes
 5. Test your changes locally

@@ -232,7 +232,7 @@ For team environments, configure remote state:
 terraform {
   backend "s3" {
     bucket         = "my-terraform-state"
-    key            = "terraform-stack/terraform.tfstate"
+    key            = "kubernetes-stack/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
     dynamodb_table = "terraform-locks"

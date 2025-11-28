@@ -73,7 +73,7 @@ Terraform will ask to migrate your local state to S3. Type `yes` to confirm.
 ```bash
 # 1. Enable remote state in terraform.tfvars
 enable_remote_state = true
-terraform_state_bucket = "ecoutu-terraform-stack-state"
+terraform_state_bucket = "ecoutu-kubernetes-stack-state"
 
 # 2. Apply to create S3 and DynamoDB resources
 terraform init
@@ -97,10 +97,10 @@ terraform {
   required_version = ">= 1.0"
 
   backend "s3" {
-    bucket         = "ecoutu-terraform-stack-state"
+    bucket         = "ecoutu-kubernetes-stack-state"
     key            = "terraform.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "ecoutu-terraform-stack-state-lock"
+    dynamodb_table = "ecoutu-kubernetes-stack-lock"
     encrypt        = true
   }
 
